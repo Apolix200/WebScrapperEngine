@@ -1,0 +1,305 @@
+﻿<Window x:Class="WebScrapperEngine.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WebScrapperEngine"
+        xmlns:converters="clr-namespace:WebScrapperEngine.Converter"
+        mc:Ignorable="d"
+        Title="WebSearchEngine" Height="720" Width="1280" Background="#F0F0F0" ResizeMode="NoResize"
+        Loaded="WebScrapper_Loaded">
+
+    <Window.Resources>
+
+        <converters:CreationTypeConverter x:Key="CreationType"/>
+        <converters:NewStatusConverter x:Key="NewStatus"/>
+        <converters:WatchStatusConverter x:Key="WatchStatus"/>
+
+        <Style TargetType="{x:Type Button}" x:Key="FilterButton">
+            <Setter Property="FontSize" Value="30"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Background" Value="#274B69"/>
+            <Setter Property="Foreground" Value="#F0F0F0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Resources>
+                <Style TargetType="Label">
+                    <Setter Property="Foreground" Value="#F0F0F0"/>
+                </Style>
+            </Style.Resources>
+        </Style>
+
+        <Style TargetType="{x:Type Button}" x:Key="ActionButton">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Background" Value="#C6CCD8"/>
+            <Setter Property="Foreground" Value="#202022"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#85A1C1"/>
+                    <Setter Property="Foreground" Value="#F0F0F0"/>
+                </Trigger>
+                <!--<Trigger Property="IsFocused" Value="True">
+                    <Setter Property="Background" Value="#85A1C1"/>
+                    <Setter Property="Foreground" Value="#F0F0F0"/>
+                </Trigger>-->
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="{x:Type DataGrid}">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Background" Value="#C6CCD8"/>
+            <Style.Resources>
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#85A1C1" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Transparent"/>
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#F0F0F0" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#F0F0F0" />
+            </Style.Resources>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridColumnHeader}">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Padding" Value="10,0,0,0"/>
+            <Setter Property="Background" Value="#274B69"/>
+            <Setter Property="Foreground" Value="#F0F0F0"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridRow}" x:Key="CreationDataGridStyle">
+            <Setter Property="Foreground" Value="#F0F0F0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding NewStatus, Converter={StaticResource NewStatus}}" Value="Seen" >
+                    <Setter Property="Background" Value="#D64E52" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NewStatus, Converter={StaticResource NewStatus}}" Value="New" >
+                    <Setter Property="Background" Value="#6CA589" />
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#85A1C1"/>
+                    <Setter Property="Foreground" Value="#F0F0F0"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridRow}" x:Key="EpisodeDataGridStyle">
+            <Setter Property="Foreground" Value="#F0F0F0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding WatchStatus, Converter={StaticResource WatchStatus}}" Value="NextWatch" >
+                    <Setter Property="Background" Value="#6CA589" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding WatchStatus, Converter={StaticResource WatchStatus}}" Value="LatestWatch" >
+                    <Setter Property="Background" Value="#F1802D" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding WatchStatus, Converter={StaticResource WatchStatus}}" Value="NeedToWatch" >
+                    <Setter Property="Background" Value="#4D7E66" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding WatchStatus, Converter={StaticResource WatchStatus}}" Value="AlreadyWatch" >
+                    <Setter Property="Background" Value="#D64E52" />
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#85A1C1"/>
+                    <Setter Property="Foreground" Value="#F0F0F0"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridRow}" x:Key="BookmarkDataGridStyle" >
+            <Setter Property="Foreground" Value="#F0F0F0"/>
+            <Setter Property="Background" Value="#6CA589" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#85A1C1"/>
+                    <Setter Property="Foreground" Value="#F0F0F0"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+
+    </Window.Resources>
+
+    <Grid >
+
+        <!--<MediaElement x:Name="allLoadingIcon" MediaEnded="LoadingIcon_MediaEnded" LoadedBehavior="Play" UnloadedBehavior="Manual" 
+                      Source="G:\MyProgramms\SiteScrapper\SiteScrapper\Images\loading.gif" Visibility="Visible" Margin="325,70,0,0"
+                      HorizontalAlignment="Left"  VerticalAlignment="Top" Height="60" Width="60" >
+            <MediaElement.OpacityMask>
+                <ImageBrush ImageSource="G:\MyProgramms\SiteScrapper\SiteScrapper\Images\loading.gif"/>
+            </MediaElement.OpacityMask>
+        </MediaElement>-->
+
+        <StackPanel Orientation = "Horizontal">
+            <Button Style="{StaticResource FilterButton}" x:Name="allFilterButton"  HorizontalAlignment="Left"  VerticalAlignment="Top" Height="60" Width="212.5" Click="LoadAllCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
+                <DockPanel LastChildFill="True">
+                    <Label DockPanel.Dock="Left" HorizontalContentAlignment="Center" Width="170" >All</Label>
+                </DockPanel>
+            </Button>
+            <Button Style="{StaticResource FilterButton}" x:Name="donghuaFilterButton"  HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="1,0,0,0" Height="60" Width="212.5" Click="LoadDonghuaCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
+                <DockPanel LastChildFill="True">
+                    <Label DockPanel.Dock="Left" HorizontalContentAlignment="Center" Width="170" Padding="20,0,0,0">Donghua</Label>
+                    <Image x:Name="donghuaFilterDotImage" DockPanel.Dock="Right" Source="/loadingDot.png" Height="20" Width="20" Margin="0,20,0,0" Stretch="Uniform" />
+                </DockPanel>
+            </Button>
+            <Button Style="{StaticResource FilterButton}" x:Name="animeFilterButton" HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="1,0,0,0" Height="60" Width="212.5" Click="LoadAnimeCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
+                <DockPanel LastChildFill="True">
+                    <Label DockPanel.Dock="Left" HorizontalContentAlignment="Center" Width="170" Padding="20,0,0,0">Anime</Label>
+                    <Image x:Name="animeFilterDotImage" DockPanel.Dock="Right" Source="/loadingDot.png" Height="20" Width="20" Margin="0,20,0,0" Stretch="Uniform" />
+                </DockPanel>
+            </Button>
+            <Button Style="{StaticResource FilterButton}" x:Name="mangaFilterButton" HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="1,0,0,0" Height="60" Width="212.5" Click="LoadMangaCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
+                <DockPanel LastChildFill="True">
+                    <Label DockPanel.Dock="Left" HorizontalContentAlignment="Center" Width="170" Padding="20,0,0,0">Manga</Label>
+                    <Image x:Name="mangaFilterDotImage" DockPanel.Dock="Right" Source="/loadingDot.png" Height="20" Width="20" Margin="0,20,0,0" Stretch="Uniform" />
+                </DockPanel>
+            </Button>
+            <Button Style="{StaticResource FilterButton}" x:Name="gameFilterButton" HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="1,0,0,0" Height="60" Width="212.5" Click="LoadGameCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
+                <DockPanel LastChildFill="True">
+                    <Label DockPanel.Dock="Left" HorizontalContentAlignment="Center" Width="170" Padding="20,0,0,0">Game</Label>
+                    <Image x:Name="gameFilterDotImage" DockPanel.Dock="Right" Source="/loadingDot.png" Height="20" Width="20" Margin="0,20,0,0" Stretch="Uniform" />
+                </DockPanel>
+            </Button>
+            <Button Style="{StaticResource FilterButton}" x:Name="erogeFilterButton" HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="1,0,0,0" Height="60" Width="212.5" Click="LoadErogeCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
+                <DockPanel LastChildFill="True">
+                    <Label DockPanel.Dock="Left" HorizontalContentAlignment="Center" Width="170" Padding="20,0,0,0">Eroge</Label>
+                    <Image x:Name="erogeFilterDotImage" DockPanel.Dock="Right" Source="/loadingDot.png" Height="20" Width="20" Margin="0,20,0,0" Stretch="Uniform" />
+                </DockPanel>
+            </Button>
+        </StackPanel>
+
+        <!--<TextBox x:Name="textBox" Text="" TextWrapping="Wrap" Margin="340,80,20,575" Background="#F0F0F0" BorderThickness="0">
+            <TextBox.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform ScaleY="1"/>
+                    <SkewTransform/>
+                    <RotateTransform/>
+                    <TranslateTransform/>
+                </TransformGroup>
+            </TextBox.RenderTransform>
+        </TextBox>-->
+
+        <MenuItem Click="AddPresetButton_Click" x:Name="AddPresetButton"
+                  Height="50" Width="150" 
+                  HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="375,90,0,0">
+            <MenuItem.Icon>
+                <Image Source="/loadingDot.png" Height="20"/>
+            </MenuItem.Icon>
+            <MenuItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Change Status"/>
+                    <Image Source="/loadingDot.png" Height="10" Margin="2,0,0,0"/>
+                </StackPanel>
+            </MenuItem.Header>
+            <MenuItem.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Add 1"/>
+                    <MenuItem Header="Add 2"/>
+                    <MenuItem Header="Add 3"/>
+                </ContextMenu>
+            </MenuItem.ContextMenu>
+        </MenuItem>
+
+        <Button Style="{StaticResource FilterButton}"  x:Name="creationsFilterButton" Content="Creations" Height="50" Width="150" 
+                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="10,80,0,0"
+                Click="LoadDatasourceCreations_Click" MouseEnter="DatasourceFilterButton_MouseEnter" MouseLeave="DatasourceFilterButton_MouseLeave"/>
+
+        <Button Style="{StaticResource FilterButton}" x:Name="episodesFilterButton" Content="Episodes" Height="50" Width="150" 
+                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="161
+                ,80,0,0"
+                Click="LoadDatasourceEpisodes_Click" MouseEnter="DatasourceFilterButton_MouseEnter" MouseLeave="DatasourceFilterButton_MouseLeave"/>
+
+        <TextBox x:Name="searchDataGridTextBox" Height="30" Width="360" FontSize="20"
+                 HorizontalAlignment="Left"  VerticalAlignment="Top"  Margin="10,140,0,0"
+                 KeyUp="searchFiltered_KeyUp"/>
+
+        <Image Height="30" Width="30" 
+                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="340,140,0,0" Source="/search.png" />
+
+        <Button Style="{StaticResource ActionButton}" Content="SeenAll" Height="30" Width="110" 
+                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="380,140,0,0"
+                Click="seenAll_Click"/>
+
+        <Button Style="{StaticResource ActionButton}" Content="ChangeStatus" Height="30" Width="120" 
+                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="495,140,0,0"
+                Click="changeStatus_Click"/>
+
+        <Button Style="{StaticResource ActionButton}" Content="Bookmark" Height="30" Width="110" 
+                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="620,140,0,0"
+                Click="addBookmark_Click"/>
+
+        <Button Style="{StaticResource ActionButton}" Content="Delete" Height="30" Width="110" 
+                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="800,140,0,0"
+                Click="deleteBookmark_Click"/>
+
+        <DataGrid RowStyle="{StaticResource CreationDataGridStyle}" x:Name="creationsDataGrid" Height="500" Width="720"
+                  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,10"
+                  AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
+                  GridLinesVisibility="None" HeadersVisibility="Column" 
+                  MouseDoubleClick="creationsDataGrid_MouseDoubleClick">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Type" Width="0.15*" Binding="{Binding CreationType, 
+                    Converter={StaticResource CreationType}}"/>
+                <!--<DataGridTextColumn Header="Site" Width="0.25*" Binding="{Binding SiteName}"/>-->
+                <DataGridTextColumn Header="Title" Width="*" Binding="{Binding Title}"/>
+                <DataGridTemplateColumn Header="Image" Width="0.15*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding Image}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <DataGrid RowStyle="{StaticResource EpisodeDataGridStyle}" x:Name="episodesDataGrid" Height="500" Width="720"
+                  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,10"
+                  AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
+                  GridLinesVisibility="None" HeadersVisibility="Column" Visibility="Hidden"
+                  MouseDoubleClick="creationsDataGrid_MouseDoubleClick">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Title" Width="*" Binding="{Binding Bookmark.Creation.Title}"/>
+                <DataGridTextColumn Header="Episode" MinWidth="0.2" Binding="{Binding EpisodeNumber}"/>
+                <DataGridTemplateColumn Header="Image" Width="0.15*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding Bookmark.Creation.Image}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <DataGrid RowStyle="{StaticResource BookmarkDataGridStyle}" x:Name="bookmarksDataGrid" Height="500" Width="450"
+                  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="800,0,0,10"
+                  AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
+                  GridLinesVisibility="None" HeadersVisibility="Column" 
+                  MouseDoubleClick="bookmarksDataGrid_MouseDoubleClick">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Type" Width="0.25*" Binding="{Binding Creation.CreationType,
+                    Converter={StaticResource CreationType}}"/>
+                <DataGridTextColumn Header="Title" Width="*" Binding="{Binding Creation.Title}"/>
+                <DataGridTemplateColumn Header="Image" Width="0.2*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding Creation.Image}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+    </Grid>
+</Window>
