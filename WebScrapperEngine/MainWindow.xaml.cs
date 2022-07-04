@@ -29,22 +29,26 @@ namespace WebScrapperEngine
     {
         private Context context;
 
-        private Filter filter = Filter.All;
-        private DatasourceFilter datasourceFilter = DatasourceFilter.Episodes;
-
         private DonghuaScrapper donghuaScrapper;
         private AnimeScrapper animeScrapper;
         private MangaScrapper mangaScrapper;
         //private GameScrapper gameScrapper;
-        //private ErogeScrapper erogeScrapper;
+        //private VnScrapper vnScrapper;
 
         private Bookmarker bookmarker;
+
+        private Filter filter;
+        private DatasourceFilter datasourceFilter;
+
+        private List<Creation> creations = new List<Creation>();
+        private List<Bookmark> bookmarks = new List<Bookmark>();
+        private List<Episode> episodes = new List<Episode>();
 
         private BackgroundWorker donghuaWorker = new BackgroundWorker();
         private BackgroundWorker animeWorker = new BackgroundWorker();
         private BackgroundWorker mangaWorker = new BackgroundWorker();
         private BackgroundWorker gameWorker = new BackgroundWorker();
-        private BackgroundWorker erogeWorker = new BackgroundWorker();
+        private BackgroundWorker vnWorker = new BackgroundWorker();
 
         private BrushConverter bc = new BrushConverter();
 
@@ -60,6 +64,9 @@ namespace WebScrapperEngine
 
             bookmarker = new Bookmarker();
 
+            filter = Filter.All;
+            datasourceFilter = DatasourceFilter.Creations;
+
             LoadCreationsAndEpisodes();
 
             donghuaWorker.DoWork += DonghuaWork;
@@ -74,8 +81,8 @@ namespace WebScrapperEngine
             gameWorker.DoWork += GameWork;
             gameWorker.RunWorkerCompleted += GameWorkCompleted;
 
-            erogeWorker.DoWork += ErogeWork;
-            erogeWorker.RunWorkerCompleted += ErogeWorkCompleted;
+            vnWorker.DoWork += vnWork;
+            vnWorker.RunWorkerCompleted += vnWorkCompleted;
         }
 
         #region BackgroundWorkers
@@ -85,7 +92,7 @@ namespace WebScrapperEngine
             animeWorker.RunWorkerAsync();
             mangaWorker.RunWorkerAsync();
             gameWorker.RunWorkerAsync();
-            erogeWorker.RunWorkerAsync();
+            vnWorker.RunWorkerAsync();
         }
         private void DonghuaWork(object sender, DoWorkEventArgs e)
         {
@@ -103,7 +110,7 @@ namespace WebScrapperEngine
         private void GameWork(object sender, DoWorkEventArgs e)
         {
         }
-        private void ErogeWork(object sender, DoWorkEventArgs e)
+        private void vnWork(object sender, DoWorkEventArgs e)
         {
         }
         private void DonghuaWorkCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -128,40 +135,38 @@ namespace WebScrapperEngine
         {
             gameFilterDotImage.Visibility = Visibility.Hidden;
         }
-        private void ErogeWorkCompleted(object sender, RunWorkerCompletedEventArgs e)
+        private void vnWorkCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            erogeFilterDotImage.Visibility = Visibility.Hidden;
+            vnFilterDotImage.Visibility = Visibility.Hidden;
         }
         #endregion
         #region GridLoadFilters        
         private void FilterButtonFocus()
         {
-            allFilterButton.Background = (Brush)bc.ConvertFrom("#274B69");
-            donghuaFilterButton.Background = (Brush)bc.ConvertFrom("#274B69");
-            animeFilterButton.Background = (Brush)bc.ConvertFrom("#274B69");
-            mangaFilterButton.Background = (Brush)bc.ConvertFrom("#274B69");
-            gameFilterButton.Background = (Brush)bc.ConvertFrom("#274B69");
-            erogeFilterButton.Background = (Brush)bc.ConvertFrom("#274B69");
+            foreach (Button btn in sideMenuFilter.Children)
+            {
+                btn.Background = this.Resources["DarkBrush"] as Brush;
+            }
 
             switch (filter)
             {
                 case Filter.All:
-                    allFilterButton.Background = (Brush)bc.ConvertFrom("#85A1C1");
+                    allFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
                     break;
                 case Filter.Donghua:
-                    donghuaFilterButton.Background = (Brush)bc.ConvertFrom("#85A1C1");
+                    donghuaFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
                     break;
                 case Filter.Anime:
-                    animeFilterButton.Background = (Brush)bc.ConvertFrom("#85A1C1");
+                    animeFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
                     break;
                 case Filter.Manga:
-                    mangaFilterButton.Background = (Brush)bc.ConvertFrom("#85A1C1");
+                    mangaFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
                     break;
                 case Filter.Game:
-                    gameFilterButton.Background = (Brush)bc.ConvertFrom("#85A1C1");
+                    gameFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
                     break;
-                case Filter.Eroge:
-                    erogeFilterButton.Background = (Brush)bc.ConvertFrom("#85A1C1");
+                case Filter.Vn:
+                    vnFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
                     break;
                 default:
                     break;
@@ -169,16 +174,16 @@ namespace WebScrapperEngine
         }
         private void DatasourceFilterButtonFocus()
         {
-            creationsFilterButton.Background = (Brush)bc.ConvertFrom("#274B69");
-            episodesFilterButton.Background = (Brush)bc.ConvertFrom("#274B69");
+            creationsFilterButton.Background = this.Resources["DarkBrush"] as Brush;
+            episodesFilterButton.Background = this.Resources["DarkBrush"] as Brush;
 
             switch (datasourceFilter)
             {
                 case DatasourceFilter.Creations:
-                    creationsFilterButton.Background = (Brush)bc.ConvertFrom("#85A1C1");
+                    creationsFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
                     break;
                 case DatasourceFilter.Episodes:
-                    episodesFilterButton.Background = (Brush)bc.ConvertFrom("#85A1C1");
+                    episodesFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
                     break;
                 default:
                     break;
@@ -186,9 +191,9 @@ namespace WebScrapperEngine
         }
         private void LoadCreationsAndEpisodes()
         {
-            List<Creation> creations = new List<Creation>();
-            List<Bookmark> bookmarks = new List<Bookmark>();
-            List<Episode> episodes = new List<Episode>();
+            creations = new List<Creation>();
+            bookmarks = new List<Bookmark>();
+            episodes = new List<Episode>();
 
             switch (filter)
             {
@@ -217,10 +222,10 @@ namespace WebScrapperEngine
                     bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Game).ToList();
                     episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Game).ToList();
                     break;
-                case Filter.Eroge:
-                    creations = context.Creations.Where(c => c.CreationType == (int)CreationType.Eroge).ToList();
-                    bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Eroge).ToList();
-                    episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Eroge).ToList();
+                case Filter.Vn:
+                    creations = context.Creations.Where(c => c.CreationType == (int)CreationType.Vn).ToList();
+                    bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Vn).ToList();
+                    episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Vn).ToList();
                     break;
                 default:
                     break;
@@ -272,9 +277,9 @@ namespace WebScrapperEngine
             filter = Filter.Game;
             LoadCreationsAndEpisodes();
         }
-        private void LoadErogeCreation_Click(object sender, RoutedEventArgs e)
+        private void LoadVnCreation_Click(object sender, RoutedEventArgs e)
         {
-            filter = Filter.Eroge;
+            filter = Filter.Vn;
             LoadCreationsAndEpisodes();
         }
         private void LoadDatasourceCreations_Click(object sender, RoutedEventArgs e)
@@ -287,14 +292,9 @@ namespace WebScrapperEngine
             datasourceFilter = DatasourceFilter.Episodes;
             LoadCreationsAndEpisodes();
         }
-        private void LoadingIcon_MediaEnded(object sender, RoutedEventArgs e)
-        {
-            sender.GetType().GetProperty("Position").SetValue(sender, new TimeSpan(0, 0, 1));
-            sender.GetType().GetMethod("Play");
-        }
         private void FilterButton_MouseEnter(object sender, MouseEventArgs e)
         {
-            sender.GetType().GetProperty("Background").SetValue(sender, (Brush)bc.ConvertFrom("#85A1C1"));
+            sender.GetType().GetProperty("Background").SetValue(sender, this.Resources["HighlightBrush"] as Brush);
         }
         private void FilterButton_MouseLeave(object sender, MouseEventArgs e)
         {
@@ -302,7 +302,7 @@ namespace WebScrapperEngine
         }
         private void DatasourceFilterButton_MouseEnter(object sender, MouseEventArgs e)
         {
-            sender.GetType().GetProperty("Background").SetValue(sender, (Brush)bc.ConvertFrom("#85A1C1"));
+            sender.GetType().GetProperty("Background").SetValue(sender, this.Resources["HighlightBrush"] as Brush);
         }
         private void DatasourceFilterButton_MouseLeave(object sender, MouseEventArgs e)
         {
@@ -364,10 +364,23 @@ namespace WebScrapperEngine
 
         private void searchFiltered_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            var filtered = context.Creations.Where(creation => creation.Title.ToLower()
-            .Contains(Regex.Replace(searchDataGridTextBox.Text.ToLower(), @"[^0-9a-zA-Z]+", "")));
+            switch (datasourceFilter)
+            {
+                case DatasourceFilter.Creations:
+                    List<Creation> filteredCreations = creations.Where(creation => creation.Title.ToLower()
+                    .Contains(Regex.Replace(searchDataGridTextBox.Text.ToLower(), @"[^0-9a-zA-Z]+", ""))).ToList();
 
-            creationsDataGrid.ItemsSource = filtered;
+                    creationsDataGrid.ItemsSource = filteredCreations;
+                    break;
+                case DatasourceFilter.Episodes:
+                    List<Episode> filteredEpisodes = episodes.Where(episode => episode.Bookmark.Creation.Title.ToLower()
+                    .Contains(Regex.Replace(searchDataGridTextBox.Text.ToLower(), @"[^0-9a-zA-Z]+", ""))).ToList();
+
+                    episodesDataGrid.ItemsSource = filteredEpisodes;
+                    break;
+                default:
+                    break;
+            }
         }
 
         private void creationsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -399,7 +412,7 @@ namespace WebScrapperEngine
         Anime,
         Manga,
         Game,
-        Eroge
+        Vn
     }
 
     public enum DatasourceFilter
@@ -420,7 +433,7 @@ namespace WebScrapperEngine
         Anime,
         Manga,
         Game,
-        Eroge
+        Vn
     }
 
     public enum SiteName

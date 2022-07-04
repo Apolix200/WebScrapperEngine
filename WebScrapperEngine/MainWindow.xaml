@@ -5,8 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WebScrapperEngine"
         xmlns:converters="clr-namespace:WebScrapperEngine.Converter"
-        mc:Ignorable="d"
-        Title="WebSearchEngine" Height="720" Width="1280" Background="#F0F0F0" ResizeMode="NoResize"
+        Height="{Binding Source={x:Static SystemParameters.PrimaryScreenHeight}, Converter={converters:WindowSizeRatioConverter}, ConverterParameter='0.9' }" 
+        Width="{Binding Source={x:Static SystemParameters.PrimaryScreenWidth}, Converter={converters:WindowSizeRatioConverter}, ConverterParameter='0.9' }" 
+        Title="WebSearchEngine" Background="#333743" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
         Loaded="WebScrapper_Loaded">
 
     <Window.Resources>
@@ -15,10 +17,18 @@
         <converters:NewStatusConverter x:Key="NewStatus"/>
         <converters:WatchStatusConverter x:Key="WatchStatus"/>
 
+        <SolidColorBrush x:Key="DarkBrush" Color="#111E2F" />
+        <SolidColorBrush x:Key="DarkPressedBrush" Color="#294870" />
+        <SolidColorBrush x:Key="HighlightBrush" Color="#7a9fce" />
+
+        <Style TargetType="{x:Type WrapPanel}" x:Key="SideMenuFilter">
+            <Setter Property="Background" Value="{StaticResource DarkBrush}"/>
+        </Style>
+
         <Style TargetType="{x:Type Button}" x:Key="FilterButton">
             <Setter Property="FontSize" Value="30"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Background" Value="#274B69"/>
+            <Setter Property="Background" Value="{StaticResource DarkBrush}"/>
             <Setter Property="Foreground" Value="#F0F0F0"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -49,16 +59,11 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#85A1C1"/>
-                    <Setter Property="Foreground" Value="#F0F0F0"/>
-                </Trigger>
-                <!--<Trigger Property="IsFocused" Value="True">
-                    <Setter Property="Background" Value="#85A1C1"/>
-                    <Setter Property="Foreground" Value="#F0F0F0"/>
-                </Trigger>-->
-            </Style.Triggers>
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="5"/>
+                </Style>
+            </Style.Resources>
         </Style>
 
         <Style TargetType="{x:Type DataGrid}">
@@ -134,118 +139,93 @@
 
     <Grid >
 
-        <!--<MediaElement x:Name="allLoadingIcon" MediaEnded="LoadingIcon_MediaEnded" LoadedBehavior="Play" UnloadedBehavior="Manual" 
-                      Source="G:\MyProgramms\SiteScrapper\SiteScrapper\Images\loading.gif" Visibility="Visible" Margin="325,70,0,0"
-                      HorizontalAlignment="Left"  VerticalAlignment="Top" Height="60" Width="60" >
-            <MediaElement.OpacityMask>
-                <ImageBrush ImageSource="G:\MyProgramms\SiteScrapper\SiteScrapper\Images\loading.gif"/>
-            </MediaElement.OpacityMask>
-        </MediaElement>-->
-
-        <StackPanel Orientation = "Horizontal">
-            <Button Style="{StaticResource FilterButton}" x:Name="allFilterButton"  HorizontalAlignment="Left"  VerticalAlignment="Top" Height="60" Width="212.5" Click="LoadAllCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
-                <DockPanel LastChildFill="True">
-                    <Label DockPanel.Dock="Left" HorizontalContentAlignment="Center" Width="170" >All</Label>
-                </DockPanel>
+        <WrapPanel Style="{StaticResource SideMenuFilter}" x:Name="sideMenuFilter" Orientation = "Vertical" 
+                   VerticalAlignment="Top" HorizontalAlignment="Left"
+                   Height="{x:Static SystemParameters.PrimaryScreenHeight}">
+            <Button Style="{StaticResource FilterButton}" x:Name="allFilterButton" Height="100"
+                    Click="LoadAllCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
+                <Label HorizontalContentAlignment="Center" VerticalAlignment="Center" Padding="10">All</Label>
             </Button>
-            <Button Style="{StaticResource FilterButton}" x:Name="donghuaFilterButton"  HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="1,0,0,0" Height="60" Width="212.5" Click="LoadDonghuaCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
-                <DockPanel LastChildFill="True">
-                    <Label DockPanel.Dock="Left" HorizontalContentAlignment="Center" Width="170" Padding="20,0,0,0">Donghua</Label>
-                    <Image x:Name="donghuaFilterDotImage" DockPanel.Dock="Right" Source="/loadingDot.png" Height="20" Width="20" Margin="0,20,0,0" Stretch="Uniform" />
-                </DockPanel>
+            <Button Style="{StaticResource FilterButton}" x:Name="donghuaFilterButton" Height="100" 
+                    Click="LoadDonghuaCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
+                <Label HorizontalContentAlignment="Center" VerticalAlignment="Center" Padding="10">Donghua</Label>
             </Button>
-            <Button Style="{StaticResource FilterButton}" x:Name="animeFilterButton" HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="1,0,0,0" Height="60" Width="212.5" Click="LoadAnimeCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
-                <DockPanel LastChildFill="True">
-                    <Label DockPanel.Dock="Left" HorizontalContentAlignment="Center" Width="170" Padding="20,0,0,0">Anime</Label>
-                    <Image x:Name="animeFilterDotImage" DockPanel.Dock="Right" Source="/loadingDot.png" Height="20" Width="20" Margin="0,20,0,0" Stretch="Uniform" />
-                </DockPanel>
+            <Button Style="{StaticResource FilterButton}" x:Name="animeFilterButton" Height="100" 
+                    Click="LoadAnimeCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
+                <Label HorizontalContentAlignment="Center" VerticalAlignment="Center" Padding="10">Anime</Label>
             </Button>
-            <Button Style="{StaticResource FilterButton}" x:Name="mangaFilterButton" HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="1,0,0,0" Height="60" Width="212.5" Click="LoadMangaCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
-                <DockPanel LastChildFill="True">
-                    <Label DockPanel.Dock="Left" HorizontalContentAlignment="Center" Width="170" Padding="20,0,0,0">Manga</Label>
-                    <Image x:Name="mangaFilterDotImage" DockPanel.Dock="Right" Source="/loadingDot.png" Height="20" Width="20" Margin="0,20,0,0" Stretch="Uniform" />
-                </DockPanel>
+            <Button Style="{StaticResource FilterButton}" x:Name="mangaFilterButton" Height="100"
+                    Click="LoadMangaCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
+                <Label HorizontalContentAlignment="Center" VerticalAlignment="Center" Padding="10">Manga</Label>
             </Button>
-            <Button Style="{StaticResource FilterButton}" x:Name="gameFilterButton" HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="1,0,0,0" Height="60" Width="212.5" Click="LoadGameCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
-                <DockPanel LastChildFill="True">
-                    <Label DockPanel.Dock="Left" HorizontalContentAlignment="Center" Width="170" Padding="20,0,0,0">Game</Label>
-                    <Image x:Name="gameFilterDotImage" DockPanel.Dock="Right" Source="/loadingDot.png" Height="20" Width="20" Margin="0,20,0,0" Stretch="Uniform" />
-                </DockPanel>
+            <Button Style="{StaticResource FilterButton}" x:Name="gameFilterButton" Height="100" 
+                    Click="LoadGameCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
+                <Label HorizontalContentAlignment="Center" VerticalAlignment="Center" Padding="10">Game</Label>
             </Button>
-            <Button Style="{StaticResource FilterButton}" x:Name="erogeFilterButton" HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="1,0,0,0" Height="60" Width="212.5" Click="LoadErogeCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
-                <DockPanel LastChildFill="True">
-                    <Label DockPanel.Dock="Left" HorizontalContentAlignment="Center" Width="170" Padding="20,0,0,0">Eroge</Label>
-                    <Image x:Name="erogeFilterDotImage" DockPanel.Dock="Right" Source="/loadingDot.png" Height="20" Width="20" Margin="0,20,0,0" Stretch="Uniform" />
-                </DockPanel>
+            <Button Style="{StaticResource FilterButton}" x:Name="vnFilterButton" Height="100"
+                    Click="LoadVnCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
+                <Label HorizontalContentAlignment="Center" VerticalAlignment="Center" Padding="10">Vn</Label>
             </Button>
-        </StackPanel>
+        </WrapPanel>
 
-        <!--<TextBox x:Name="textBox" Text="" TextWrapping="Wrap" Margin="340,80,20,575" Background="#F0F0F0" BorderThickness="0">
-            <TextBox.RenderTransform>
-                <TransformGroup>
-                    <ScaleTransform ScaleY="1"/>
-                    <SkewTransform/>
-                    <RotateTransform/>
-                    <TranslateTransform/>
-                </TransformGroup>
-            </TextBox.RenderTransform>
-        </TextBox>-->
+        <Image x:Name="allFilterDotImage" Source="/loadingDot.png" Height="20" Width="20" Stretch="Uniform"
+               VerticalAlignment="Top" HorizontalAlignment="Left" Margin="110,70,0,0" />
+        <Image x:Name="donghuaFilterDotImage" Source="/loadingDot.png" Height="20" Width="20" Stretch="Uniform"
+               VerticalAlignment="Top" HorizontalAlignment="Left" Margin="110,170,0,0" />
+        <Image x:Name="animeFilterDotImage" Source="/loadingDot.png" Height="20" Width="20" Stretch="Uniform"
+               VerticalAlignment="Top" HorizontalAlignment="Left" Margin="110,270,0,0" />
+        <Image x:Name="mangaFilterDotImage" Source="/loadingDot.png" Height="20" Width="20" Stretch="Uniform"
+               VerticalAlignment="Top" HorizontalAlignment="Left" Margin="110,370,0,0" />
+        <Image x:Name="gameFilterDotImage" Source="/loadingDot.png" Height="20" Width="20" Stretch="Uniform"
+               VerticalAlignment="Top" HorizontalAlignment="Left" Margin="110,470,0,0" />
+        <Image x:Name="vnFilterDotImage" Source="/loadingDot.png" Height="20" Width="20" Stretch="Uniform"
+               VerticalAlignment="Top" HorizontalAlignment="Left" Margin="110,570,0,0" />
 
-        <MenuItem Click="AddPresetButton_Click" x:Name="AddPresetButton"
-                  Height="50" Width="150" 
-                  HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="375,90,0,0">
-            <MenuItem.Icon>
-                <Image Source="/loadingDot.png" Height="20"/>
-            </MenuItem.Icon>
-            <MenuItem.Header>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Change Status"/>
-                    <Image Source="/loadingDot.png" Height="10" Margin="2,0,0,0"/>
-                </StackPanel>
-            </MenuItem.Header>
-            <MenuItem.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Add 1"/>
-                    <MenuItem Header="Add 2"/>
-                    <MenuItem Header="Add 3"/>
-                </ContextMenu>
-            </MenuItem.ContextMenu>
-        </MenuItem>
+        <Button Style="{StaticResource FilterButton}"  x:Name="creationsFilterButton" Content="Creations" Height="50" Width="250" 
+            HorizontalAlignment="Center" VerticalAlignment="Top" Margin="-250,30,0,0"
+            Click="LoadDatasourceCreations_Click" MouseEnter="DatasourceFilterButton_MouseEnter" MouseLeave="DatasourceFilterButton_MouseLeave">
+            <Button.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="25,0,0,25"/>
+                </Style>
+            </Button.Resources>
+        </Button>
 
-        <Button Style="{StaticResource FilterButton}"  x:Name="creationsFilterButton" Content="Creations" Height="50" Width="150" 
-                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="10,80,0,0"
-                Click="LoadDatasourceCreations_Click" MouseEnter="DatasourceFilterButton_MouseEnter" MouseLeave="DatasourceFilterButton_MouseLeave"/>
+        <Button Style="{StaticResource FilterButton}" x:Name="episodesFilterButton" Content="Episodes" Height="50" Width="250" 
+                HorizontalAlignment="Center" VerticalAlignment="Top" Margin="250,30,0,0"
+                Click="LoadDatasourceEpisodes_Click" MouseEnter="DatasourceFilterButton_MouseEnter" MouseLeave="DatasourceFilterButton_MouseLeave">
+            <Button.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="0,25,25,0"/>
+                </Style>
+            </Button.Resources>
+        </Button>
 
-        <Button Style="{StaticResource FilterButton}" x:Name="episodesFilterButton" Content="Episodes" Height="50" Width="150" 
-                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="161
-                ,80,0,0"
-                Click="LoadDatasourceEpisodes_Click" MouseEnter="DatasourceFilterButton_MouseEnter" MouseLeave="DatasourceFilterButton_MouseLeave"/>
-
-        <TextBox x:Name="searchDataGridTextBox" Height="30" Width="360" FontSize="20"
-                 HorizontalAlignment="Left"  VerticalAlignment="Top"  Margin="10,140,0,0"
+        <TextBox x:Name="searchDataGridTextBox" Height="40" Width="500" FontSize="30"
+                 HorizontalAlignment="Left"  VerticalAlignment="Top"  Margin="155,120,0,0"
                  KeyUp="searchFiltered_KeyUp"/>
 
-        <Image Height="30" Width="30" 
-                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="340,140,0,0" Source="/search.png" />
+        <Image Height="40" Width="40" 
+                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="615,120,0,0" Source="/search.png" />
 
         <Button Style="{StaticResource ActionButton}" Content="SeenAll" Height="30" Width="110" 
-                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="380,140,0,0"
+                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="985,126,0,0"
                 Click="seenAll_Click"/>
 
-        <Button Style="{StaticResource ActionButton}" Content="ChangeStatus" Height="30" Width="120" 
-                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="495,140,0,0"
+        <Button Style="{StaticResource ActionButton}" Content="ChangeStatus" Height="30" Width="130" 
+                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="1100,220,0,0"
                 Click="changeStatus_Click"/>
 
-        <Button Style="{StaticResource ActionButton}" Content="Bookmark" Height="30" Width="110" 
-                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="620,140,0,0"
+        <Button Style="{StaticResource ActionButton}" Content="Bookmark" Height="30" Width="130" 
+                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="1100,175,0,0"
                 Click="addBookmark_Click"/>
 
         <Button Style="{StaticResource ActionButton}" Content="Delete" Height="30" Width="110" 
-                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="800,140,0,0"
+                HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="1237,120,0,0"
                 Click="deleteBookmark_Click"/>
 
-        <DataGrid RowStyle="{StaticResource CreationDataGridStyle}" x:Name="creationsDataGrid" Height="500" Width="720"
-                  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,10"
+        <DataGrid RowStyle="{StaticResource CreationDataGridStyle}" x:Name="creationsDataGrid" Height="760" Width="940"
+                  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="155,0,0,10"
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
                   GridLinesVisibility="None" HeadersVisibility="Column" 
                   MouseDoubleClick="creationsDataGrid_MouseDoubleClick">
@@ -264,10 +244,10 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <DataGrid RowStyle="{StaticResource EpisodeDataGridStyle}" x:Name="episodesDataGrid" Height="500" Width="720"
-                  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,10"
+        <DataGrid RowStyle="{StaticResource EpisodeDataGridStyle}" x:Name="episodesDataGrid" Height="760" Width="940"
+                  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="155,0,0,10"
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
-                  GridLinesVisibility="None" HeadersVisibility="Column" Visibility="Hidden"
+                  GridLinesVisibility="None" HeadersVisibility="Column"
                   MouseDoubleClick="creationsDataGrid_MouseDoubleClick">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Title" Width="*" Binding="{Binding Bookmark.Creation.Title}"/>
@@ -282,8 +262,8 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <DataGrid RowStyle="{StaticResource BookmarkDataGridStyle}" x:Name="bookmarksDataGrid" Height="500" Width="450"
-                  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="800,0,0,10"
+        <DataGrid RowStyle="{StaticResource BookmarkDataGridStyle}" x:Name="bookmarksDataGrid" Height="760" Width="450"
+                  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="1235,0,0,10"
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
                   GridLinesVisibility="None" HeadersVisibility="Column" 
                   MouseDoubleClick="bookmarksDataGrid_MouseDoubleClick">

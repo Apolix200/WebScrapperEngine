@@ -87,6 +87,7 @@
     <Compile Include="Converter\CreationTypeConverter.cs" />
     <Compile Include="Converter\NewStatusConverter.cs" />
     <Compile Include="Converter\WatchStatusConverter.cs" />
+    <Compile Include="Converter\WindowSizeRatioConverter.cs" />
     <Compile Include="Entity\Bookmark.cs" />
     <Compile Include="Entity\Context.cs" />
     <Compile Include="Entity\Creation.cs" />
