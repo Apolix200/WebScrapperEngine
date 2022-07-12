@@ -3,8 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows;
 using WebScrapperEngine.Entity;
+using WebScrapperEngine.Scrapper;
 using static WebScrapperEngine.Scrapper.AnimeScrapper;
 using static WebScrapperEngine.Scrapper.DonghuaScrapper;
 using static WebScrapperEngine.Scrapper.MangaScrapper;
@@ -13,13 +16,23 @@ namespace WebScrapperEngine.Action
 {
     class Bookmarker
     {
+        private MainWindow mainWindow;
         private HtmlWeb web;
         private Context context;
 
-        public Bookmarker()
+        private DonghuaScrapper donghuaScrapper;
+        private AnimeScrapper animeScrapper;
+        private MangaScrapper mangaScrapper;
+
+        public Bookmarker(MainWindow mainWindow)
         {
+            this.mainWindow = mainWindow;
             web = new HtmlWeb();
             context = new Context();
+
+            donghuaScrapper = new DonghuaScrapper(mainWindow);
+            animeScrapper = new AnimeScrapper(mainWindow);
+            mangaScrapper = new MangaScrapper(mainWindow);
         }
 
         public void BookmarkCreation(Creation creation)
@@ -32,69 +45,33 @@ namespace WebScrapperEngine.Action
                     ConnectedId = null
                 };
 
-                context.Bookmarks.Add(bookmark);
-                context.SaveChanges();
+                try
+                {
+                    context.Bookmarks.Add(bookmark);
+                    context.SaveChanges();
+                }
+                catch (Exception e)
+                {
+                    mainWindow.exceptionListBox.Items.Add("Bookmark creation failed! Exception: " + e.GetType().Name);
+                }
 
-                HtmlWeb web = new HtmlWeb();
-                var doc = web.Load(creation.Link);
-
-                HtmlNodeCollection nodes;
                 switch ((SiteName)creation.SiteName)
                 {
                     case SiteName.Naruldonghua:
-                        nodes = doc.DocumentNode.SelectNodes(Naruldonghua.episodeList);
+                        donghuaScrapper.BookmarkEpisode(creation, bookmark);
                         break;
                     case SiteName.Animexin:
-                        nodes = doc.DocumentNode.SelectNodes(Animexin.episodeList);
+                        donghuaScrapper.BookmarkEpisode(creation, bookmark);
                         break;
                     case SiteName.Kickassanime:
-                        nodes = doc.DocumentNode.SelectNodes(Kickassanime.episodeList);
+                        animeScrapper.BookmarkEpisode(creation, bookmark);
                         break;
                     case SiteName.Mangasee:
-                        nodes = doc.DocumentNode.SelectNodes(Mangasee.episodeList);
+                        mangaScrapper.BookmarkEpisode(creation, bookmark);
                         break;
                     default:
-                        nodes = null;
                         break;
                 }
-
-                foreach (var node in nodes)
-                {
-                    string episodeNumber;
-                    string episodeLink;
-                    switch ((SiteName)creation.SiteName)
-                    {
-                        case SiteName.Naruldonghua:
-                            episodeNumber = node.SelectSingleNode(Naruldonghua.episodeNumber) != null ? node.SelectSingleNode(Naruldonghua.episodeNumber).InnerText : null;
-                            episodeLink = node.SelectSingleNode(Naruldonghua.episodeLink).GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Naruldonghua.episodeLink).GetAttributeValue<string>("href", null) : null;
-                            break;
-                        case SiteName.Animexin:
-                            episodeNumber = node.SelectSingleNode(Animexin.episodeNumber) != null ? node.SelectSingleNode(Animexin.episodeNumber).InnerText : null;
-                            episodeLink = node.SelectSingleNode(Animexin.episodeLink).GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Animexin.episodeLink).GetAttributeValue<string>("href", null) : null;
-                            break;
-                        case SiteName.Kickassanime:
-                            episodeNumber = node.SelectSingleNode(Kickassanime.episodeNumber) != null ? node.SelectSingleNode(Kickassanime.episodeNumber).InnerText : null;
-                            episodeLink = node.SelectSingleNode(Kickassanime.episodeLink).GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Kickassanime.episodeLink).GetAttributeValue<string>("href", null) : null;
-                            break;
-                        case SiteName.Mangasee:
-                            episodeNumber = node.SelectSingleNode(Mangasee.episodeNumber) != null ? node.SelectSingleNode(Mangasee.episodeNumber).InnerText : null;
-                            episodeLink = node.SelectSingleNode(Mangasee.episodeLink).GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Mangasee.episodeLink).GetAttributeValue<string>("href", null) : null;
-                            break;
-                        default:
-                            episodeNumber = null;
-                            episodeLink = null;
-                            break;
-                    }
-
-                    context.Episodes.Add(new Episode()
-                    {
-                        BookmarkId = bookmark.BookmarkId,
-                        EpisodeNumber = Int32.Parse(episodeNumber),
-                        Link = episodeLink,
-                        WatchStatus = Int32.Parse(episodeNumber) <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
-                    });
-                }
-                context.SaveChanges();
             }
         }
 
@@ -102,15 +79,22 @@ namespace WebScrapperEngine.Action
         {
             if (context.Bookmarks.Any(n => n.CreationId == bookmark.CreationId))
             {
-                context.Bookmarks.Remove(context.Bookmarks.FirstOrDefault(n => n.CreationId == bookmark.CreationId));
-
-                foreach (var episode in context.Episodes.Where(n => n.BookmarkId == bookmark.BookmarkId))
+                try
                 {
-                    context.Episodes.Remove(episode);
-                }
+                    context.Bookmarks.Remove(context.Bookmarks.FirstOrDefault(n => n.CreationId == bookmark.CreationId));
 
-                context.SaveChanges();
-            }
+                    foreach (var episode in context.Episodes.Where(n => n.BookmarkId == bookmark.BookmarkId))
+                    {
+                        context.Episodes.Remove(episode);
+                    }
+
+                    context.SaveChanges();
+                }
+                    catch (Exception e)
+                {
+                    mainWindow.exceptionListBox.Items.Add("Bookmark deletion failed! Exception: " + e.GetType().Name);
+                }
+        }
         }
     }
 }

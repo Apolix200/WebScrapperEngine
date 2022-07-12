@@ -86,6 +86,7 @@
     <Compile Include="Action\Bookmarker.cs" />
     <Compile Include="Converter\CreationTypeConverter.cs" />
     <Compile Include="Converter\NewStatusConverter.cs" />
+    <Compile Include="Converter\SiteNameTypeConverter.cs" />
     <Compile Include="Converter\WatchStatusConverter.cs" />
     <Compile Include="Converter\WindowSizeRatioConverter.cs" />
     <Compile Include="Entity\Bookmark.cs" />
@@ -135,16 +136,37 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Image\imageResize.png" />
+  </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="loadingDot.png" />
+    <Resource Include="Image\loadingDot.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="search.png" />
+    <Resource Include="Image\search.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Image\downArrow.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Image\bookmark.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Image\trash.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Image\link.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Image\save.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Image\load.png" />
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
