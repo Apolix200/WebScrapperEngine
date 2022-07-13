@@ -476,7 +476,9 @@ namespace WebScrapperEngine
 
         private void linkBookmark_Click(object sender, RoutedEventArgs e)
         {
+            LinkWindow linkWindow = new LinkWindow();
 
+            linkWindow.Show();
         }
 
         private void copyBookmark_Click(object sender, RoutedEventArgs e)

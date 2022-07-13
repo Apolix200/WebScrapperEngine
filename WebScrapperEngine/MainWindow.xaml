@@ -299,7 +299,7 @@
                   CanUserSortColumns = "False" CanUserResizeColumns="False"  
                   MouseDoubleClick="creationsDataGrid_MouseDoubleClick">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Type" Width="0.2*" Binding="{Binding SiteName, 
+                <DataGridTextColumn Header="Site" Width="0.2*" Binding="{Binding SiteName, 
                     Converter={StaticResource SiteName}}"/>
                 <DataGridTextColumn Header="Title" Width="*" Binding="{Binding Title}"/>
                 <DataGridTemplateColumn x:Name="creationsDataGridImage" Header="Image" Width="Auto">
