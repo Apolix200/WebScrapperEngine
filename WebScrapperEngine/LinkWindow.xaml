@@ -173,9 +173,16 @@
 
     <Grid >
 
+        <TextBox Style="{StaticResource SearchTextBoxSytle}" x:Name="searchDataGridTextBox" Height="40" Width="750" FontSize="30"
+                 HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,705"
+                 KeyUp="searchFiltered_KeyUp"/>
+
+        <Image Height="40" Width="40" 
+                HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="720,0,0,705" Source="/Image/search.png" />
+
         <DataGrid RowStyle="{StaticResource CreationDataGridStyle}" x:Name="allCreationsDataGrid" 
                   HorizontalAlignment="Left" VerticalAlignment="Bottom" 
-                  Margin="10,0,0,60" Height="675" Width="750"
+                  Margin="10,0,0,60" Height="640" Width="750"
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended" 
                   GridLinesVisibility="None" HeadersVisibility="Column" 
                   CanUserSortColumns = "False" CanUserResizeColumns="False">
@@ -193,10 +200,9 @@
             </DataGrid.Columns>
         </DataGrid>
 
-
         <DataGrid RowStyle="{StaticResource CreationDataGridStyle}" x:Name="recommendCreationsDataGrid" 
                   HorizontalAlignment="Left" VerticalAlignment="Bottom" 
-                  Margin="770,0,0,60" Height="675" Width="740"
+                  Margin="770,0,0,60" Height="685" Width="740"
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended" 
                   GridLinesVisibility="None" HeadersVisibility="Column" 
                   CanUserSortColumns = "False" CanUserResizeColumns="False">

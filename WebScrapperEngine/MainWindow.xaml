@@ -241,6 +241,12 @@
         <Image Height="40" Width="40" 
                 HorizontalAlignment="Left" VerticalAlignment="Top" Margin="615,120,0,0" Source="/Image/search.png" />
 
+        <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
+                Margin="890,120,0,0" Height="40" Width="40"
+                Click="selectAll_Click">
+            <Image Width="30" Height="30" Source="/Image/selectAll.png"></Image>
+        </Button>
+
         <Button Style="{StaticResource ActionButton}" x:Name="statusChangeButton"
                 HorizontalAlignment="Left"  VerticalAlignment="Top"
                 Margin="945,120,0,0" Height="40" Width="40" 
@@ -294,9 +300,9 @@
 
         <DataGrid RowStyle="{StaticResource CreationDataGridStyle}" x:Name="creationsDataGrid" Height="760" Width="940"
                   HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="155,0,0,10"
-                  AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended" 
-                  GridLinesVisibility="None" HeadersVisibility="Column" 
-                  CanUserSortColumns = "False" CanUserResizeColumns="False"  
+                  AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended"
+                  GridLinesVisibility="None" HeadersVisibility="Column"
+                  CanUserSortColumns = "False" CanUserResizeColumns="False"
                   MouseDoubleClick="creationsDataGrid_MouseDoubleClick">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Site" Width="0.2*" Binding="{Binding SiteName, 

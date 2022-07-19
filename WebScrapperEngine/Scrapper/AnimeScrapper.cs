@@ -120,17 +120,17 @@ namespace WebScrapperEngine.Scrapper
         public void SearchKickassSite()
         {
             //List<Creation> creations = new List<Creation>();
-            SiteResponse siteResponse;
-            string siteJson;
+            SiteResponse siteResponse = null;
+            string siteJson = "";
             int index = 1;
 
             do
             {
-                siteJson = mainWindow.MakeRequest(Kickassanime.websiteLink + Kickassanime.apiPath + index, Kickassanime.cuttenWebsiteLink);
-                siteResponse = JsonConvert.DeserializeObject<SiteResponse>(siteJson);
-
                 try 
-                { 
+                {
+                    siteJson = mainWindow.MakeRequest(Kickassanime.websiteLink + Kickassanime.apiPath + index, Kickassanime.cuttenWebsiteLink);
+                    siteResponse = JsonConvert.DeserializeObject<SiteResponse>(siteJson);
+
                     foreach (var data in siteResponse.Data)
                     {
                         var animeCreation = new Creation()

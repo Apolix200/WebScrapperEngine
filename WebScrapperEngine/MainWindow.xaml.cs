@@ -48,10 +48,12 @@ namespace WebScrapperEngine
 
         private BrushConverter bc = new BrushConverter();
 
-        private string filterText = "";
-        private bool bigImage = false;
-        private int bigImageSize = 120;
-        private int smallImageSize = 40;
+        private const int bigImageSize = 120;
+        private const int smallImageSize = 40;
+
+        private string filterText;
+        private bool bigImage;
+
         public int imageSize { get; set; }
 
         public MainWindow()
@@ -68,6 +70,9 @@ namespace WebScrapperEngine
 
             filter = Filter.All;
             datasourceFilter = DatasourceFilter.Episodes;
+
+            filterText = "";
+            bigImage = false;
 
             imageSize = bigImage ? bigImageSize : smallImageSize;
 
@@ -131,7 +136,7 @@ namespace WebScrapperEngine
                     if(episode.WatchStatus != (int)WatchStatus.NextWatch)
                     {
                         context.Episodes.FirstOrDefault(n => n.EpisodeId == episode.EpisodeId).WatchStatus = (int)WatchStatus.NextWatch;
-                    }        
+                    }
                 }
                 else if (episode.EpisodeNumber == nextEpisode - 1)
                 {
@@ -145,7 +150,7 @@ namespace WebScrapperEngine
                     if(episode.WatchStatus != (int)WatchStatus.AlreadyWatch)
                     {
                         context.Episodes.FirstOrDefault(n => n.EpisodeId == episode.EpisodeId).WatchStatus = (int)WatchStatus.AlreadyWatch;
-                    }    
+                    }
                 }
             }
             context.SaveChanges();
@@ -262,9 +267,9 @@ namespace WebScrapperEngine
                     break;
             }
 
-            creationsDataGrid.ItemsSource = creations.OrderBy(o => o.NewStatus);
+            creationsDataGrid.ItemsSource = creations.OrderBy(o => o.NewStatus).Where(creation => creation.Title.ToLower().Contains(filterText));
             bookmarksDataGrid.ItemsSource = bookmarks;
-            episodesDataGrid.ItemsSource = episodes.OrderBy(o => o.WatchStatus);
+            episodesDataGrid.ItemsSource = episodes.OrderBy(o => o.WatchStatus).Where(episode => episode.Bookmark.Creation.Title.ToLower().Contains(filterText));
 
             CancelDropdownList();
             FilterButtonFocus();
@@ -337,6 +342,11 @@ namespace WebScrapperEngine
             creationsDataGridImage.Width = bigImage ? bigImageSize : smallImageSize + 30;
             episodesDataGrid.Items.Refresh();
             episodesdataGridImage.Width = bigImage ? bigImageSize : smallImageSize + 30;
+        }
+
+        private void selectAll_Click(object sender, RoutedEventArgs e)
+        {
+            creationsDataGrid.SelectAll();
         }
 
         private void changeStatus_Click(object sender, RoutedEventArgs e)
@@ -476,9 +486,17 @@ namespace WebScrapperEngine
 
         private void linkBookmark_Click(object sender, RoutedEventArgs e)
         {
-            LinkWindow linkWindow = new LinkWindow();
+            if (bookmarksDataGrid != null && bookmarksDataGrid.SelectedItems != null)
+            {
+                foreach (Bookmark bookmark in bookmarksDataGrid.SelectedItems)
+                {
+                    LinkWindow linkWindow = new LinkWindow(bookmark);
 
-            linkWindow.Show();
+                    linkWindow.Show();
+                }
+            }
+
+
         }
 
         private void copyBookmark_Click(object sender, RoutedEventArgs e)
@@ -493,23 +511,9 @@ namespace WebScrapperEngine
 
         private void searchFiltered_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            switch (datasourceFilter)
-            {
-                case DatasourceFilter.Creations:
-                    List<Creation> filteredCreations = creations.Where(creation => creation.Title.ToLower()
-                    .Contains(Regex.Replace(searchDataGridTextBox.Text.ToLower(), @"[^0-9a-zA-Z]+", ""))).ToList();
+            filterText = Regex.Replace(searchDataGridTextBox.Text.ToLower(), @"[^0-9a-zA-Z]+", "");
 
-                    creationsDataGrid.ItemsSource = filteredCreations;
-                    break;
-                case DatasourceFilter.Episodes:
-                    List<Episode> filteredEpisodes = episodes.Where(episode => episode.Bookmark.Creation.Title.ToLower()
-                    .Contains(Regex.Replace(searchDataGridTextBox.Text.ToLower(), @"[^0-9a-zA-Z]+", ""))).ToList();
-
-                    episodesDataGrid.ItemsSource = filteredEpisodes;
-                    break;
-                default:
-                    break;
-            }
+            LoadCreationsAndEpisodes();
         }
 
         private void creationsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)

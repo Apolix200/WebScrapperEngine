@@ -115,11 +115,12 @@ namespace WebScrapperEngine.Scrapper
         public void SearchMangaseeSite()
         {
             List<Creation> creations = new List<Creation>();
-            string siteJson = mainWindow.MakeRequest(Mangasee.websiteLink + Mangasee.apiPath, Mangasee.cuttenWebsiteLink);
-            var siteResponse = JsonConvert.DeserializeObject<List<Data>>(siteJson);
 
             try 
             {
+                string siteJson = mainWindow.MakeRequest(Mangasee.websiteLink + Mangasee.apiPath, Mangasee.cuttenWebsiteLink);
+                var siteResponse = JsonConvert.DeserializeObject<List<Data>>(siteJson);
+
                 foreach (var data in siteResponse)
                 {
                     var mangaCreation = new Creation()
