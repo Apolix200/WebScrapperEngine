@@ -85,7 +85,12 @@
     </ApplicationDefinition>
     <Compile Include="Action\Bookmarker.cs" />
     <Compile Include="Action\StringSimilarity.cs" />
+    <Compile Include="ConfirmWindow.xaml.cs">
+      <DependentUpon>ConfirmWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Converter\ConnectedIdConverter.cs" />
     <Compile Include="Converter\CreationTypeConverter.cs" />
+    <Compile Include="Converter\LinkedCreationConverter.cs" />
     <Compile Include="Converter\NewStatusConverter.cs" />
     <Compile Include="Converter\SiteNameTypeConverter.cs" />
     <Compile Include="Converter\WatchStatusConverter.cs" />
@@ -100,6 +105,10 @@
     <Compile Include="Scrapper\AnimeScrapper.cs" />
     <Compile Include="Scrapper\DonghuaScrapper.cs" />
     <Compile Include="Scrapper\MangaScrapper.cs" />
+    <Page Include="ConfirmWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="LinkWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -151,7 +160,7 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Image\loadingDot.png" />
+    <Resource Include="Image\redLoadingDot.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Image\search.png" />
@@ -176,6 +185,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Image\selectAll.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Image\blueLoadingDot.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

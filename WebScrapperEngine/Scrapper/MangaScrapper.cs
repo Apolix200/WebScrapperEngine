@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -40,26 +41,28 @@ namespace WebScrapperEngine.Scrapper
 
             string nodeText = doc.DocumentNode.SelectSingleNode(Mangasee.episodeList).InnerHtml;
             int firstStringPosition = nodeText.IndexOf("vm.Chapters") + 14;
-            int secondStringPosition = nodeText.IndexOf("vm.NumSubs") - 2;
+            int secondStringPosition = nodeText.IndexOf("vm.NumSubs") - 6;
 
             string siteJson = nodeText.Substring(firstStringPosition, secondStringPosition - firstStringPosition);
-            MessageBox.Show(siteJson);
             var siteResponse = JsonConvert.DeserializeObject<List<EpisodeData>>(siteJson);
 
             try 
             { 
-                for (int i = 1; i < ((Convert.ToDouble(1) - 100000) / 10) + 1; i++)
+                foreach (var data in siteResponse)
                 {
-                    int episodeNumberFonLinQ = i;
+                    double timesOf = Math.Floor(Convert.ToDouble(data.Chapter) / 100000);
+                    double episodeNumberFonLinQ = (Convert.ToDouble(data.Chapter) - 100000 * timesOf) / 10;
+
                     if (!context.Episodes.Any(n => n.Bookmark.Creation.SiteName == creation.SiteName
                     && n.Bookmark.Creation.Title == creation.Title && n.EpisodeNumber == episodeNumberFonLinQ))
                     {
                         context.Episodes.Add(new Episode()
                         {
                             BookmarkId = bookmark.BookmarkId,
-                            EpisodeNumber = i,
-                            Link = creation.Link.Replace("/manga/", "/read-online/") + "-chapter-" + i + ".html",
-                            WatchStatus = i <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
+                            EpisodeNumber = episodeNumberFonLinQ,
+                            Link = creation.Link.Replace("/manga/", "/read-online/") + "-chapter-" + episodeNumberFonLinQ.ToString(new CultureInfo("en-US")) +
+                            (timesOf > 1 ? "-index-" + timesOf : "") + ".html",
+                            WatchStatus = episodeNumberFonLinQ <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
                         });
                     }
                 }
@@ -81,24 +84,30 @@ namespace WebScrapperEngine.Scrapper
                 var doc = web.Load(bookmark.Creation.Link);
 
                 string nodeText = doc.DocumentNode.SelectSingleNode(Mangasee.episodeList).InnerHtml;
-                int firstStringPosition = nodeText.IndexOf("vm.Chapters");
-                string numberString = nodeText.Substring(firstStringPosition + 27, 6);
-                
+                int firstStringPosition = nodeText.IndexOf("vm.Chapters") + 14;
+                int secondStringPosition = nodeText.IndexOf("vm.NumSubs") - 6;
+
+                string siteJson = nodeText.Substring(firstStringPosition, secondStringPosition - firstStringPosition);
+                var siteResponse = JsonConvert.DeserializeObject<List<EpisodeData>>(siteJson);
+
                 try 
                 {
-                    for (int i = 1; i < ((Int32.Parse(numberString) - 100000) / 10) + 1; i++)
+                    foreach (var data in siteResponse)
                     {
-                        int episodeNumberFonLinQ = i;
+                        double timesOf = Math.Floor(Convert.ToDouble(data.Chapter) / 100000);
+                        double episodeNumberFonLinQ = (Convert.ToDouble(data.Chapter) - 100000 * timesOf) / 10;
+
                         if (!context.Episodes.Any(n => n.Bookmark.Creation.SiteName == bookmark.Creation.SiteName
                         && n.Bookmark.Creation.Title == bookmark.Creation.Title && n.EpisodeNumber == episodeNumberFonLinQ))
                         {
                             context.Episodes.Add(new Episode()
                             {
                                 BookmarkId = bookmark.BookmarkId,
-                                EpisodeNumber = i,
-                                Link = bookmark.Creation.Link.Replace("/manga/", "/read-online/") + "-chapter-" + i + ".html",
-                                WatchStatus = i <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
-                            }); ;
+                                EpisodeNumber = episodeNumberFonLinQ,
+                                Link = bookmark.Creation.Link.Replace("/manga/", "/read-online/") + "-chapter-" + episodeNumberFonLinQ.ToString(new CultureInfo("en-US")) +
+                                (timesOf > 1 ? "-index-" + timesOf : "") + ".html",
+                                WatchStatus = episodeNumberFonLinQ <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
+                            });
                         }
                     }
                     context.SaveChanges();
@@ -151,6 +160,7 @@ namespace WebScrapperEngine.Scrapper
         {
             mangaEpisodeWorker.RunWorkerAsync();
         }
+
         private void MangaEpisodeWork(object sender, DoWorkEventArgs e)
         {
             SearchEpisode();
@@ -159,6 +169,8 @@ namespace WebScrapperEngine.Scrapper
         private void MangaEpisodeWorkCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             mainWindow.LoadCreationsAndEpisodes();
+
+            mainWindow.mangaEpisodeFilterDotImage.Visibility = Visibility.Hidden;
 
             mangaCreationWorker.RunWorkerAsync();
         }
@@ -172,7 +184,7 @@ namespace WebScrapperEngine.Scrapper
         {
             mainWindow.LoadCreationsAndEpisodes();
 
-            mainWindow.mangaFilterDotImage.Visibility = Visibility.Hidden;
+            mainWindow.mangaCreationFilterDotImage.Visibility = Visibility.Hidden;
         }
 
         public class Data
@@ -183,10 +195,10 @@ namespace WebScrapperEngine.Scrapper
         }
         public class EpisodeData
         {
-            public string Chpater { get; set; }
+            public string Chapter { get; set; }
             public string Type { get; set; }
             public string Date { get; set; }
-            public string ChpaterName { get; set; }
+            public string ChapterName { get; set; }
         }
         public static class Mangasee
         {
@@ -194,7 +206,7 @@ namespace WebScrapperEngine.Scrapper
             public const string websiteLink = "https://mangasee123.com";
             public const string apiPath = "/_search.php";
             public const string linkPath = "/manga/";
-            public const string imagePath = "https://cover.nep.li/cover/";
+            public const string imagePath = "https://temp.compsci88.com/cover/";
 
             public const string episodeList = "/html/body/script[10]/text()";
         }

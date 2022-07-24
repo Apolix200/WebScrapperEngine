@@ -78,8 +78,10 @@ namespace WebScrapperEngine
 
             LoadCreationsAndEpisodes();
 
-            gameFilterDotImage.Visibility = Visibility.Hidden;
-            vnFilterDotImage.Visibility = Visibility.Hidden;
+            gameCreationFilterDotImage.Visibility = Visibility.Hidden;
+            vnCreationFilterDotImage.Visibility = Visibility.Hidden;
+            gameEpisodeFilterDotImage.Visibility = Visibility.Hidden;
+            vnEpisodeFilterDotImage.Visibility = Visibility.Hidden;
         }
         public string MakeRequest(string requestString, string websiteLink)
         {
@@ -346,7 +348,14 @@ namespace WebScrapperEngine
 
         private void selectAll_Click(object sender, RoutedEventArgs e)
         {
-            creationsDataGrid.SelectAll();
+            creationsDataGrid.UnselectAll();
+            if (creationsDataGrid != null)
+            {
+                for (int i = 0; i < creationsDataGrid.Items.Count; i++)
+                {
+                    creationsDataGrid.SelectedItems.Add(creationsDataGrid.Items[i]);
+                }
+            }
         }
 
         private void changeStatus_Click(object sender, RoutedEventArgs e)
@@ -399,36 +408,52 @@ namespace WebScrapperEngine
             statusDropDownList.Children.Add(btn);
         }
 
-        private void creationChangeStatus_Click(object sender, RoutedEventArgs e)
+        private async void creationChangeStatus_Click(object sender, RoutedEventArgs e)
         {
-            Button status = sender as Button;
-            if (creationsDataGrid != null && creationsDataGrid.SelectedItems != null)
+            ConfirmWindow confirmWindow = new ConfirmWindow(this);
+
+            confirmWindow.ShowDialog();
+
+            if (confirmWindow.Confirmation)
             {
-                foreach (Creation creation in creationsDataGrid.SelectedItems)
+                Button status = sender as Button;
+                if (creationsDataGrid != null && creationsDataGrid.SelectedItems != null)
                 {
-                    NewStatus newStatus = (NewStatus)Enum.Parse(typeof(NewStatus), status.Content.ToString());
-                    context.Creations.FirstOrDefault(n => n.CreationId == creation.CreationId).NewStatus = (int)newStatus;
-                    context.SaveChanges();
+                    foreach (Creation creation in creationsDataGrid.SelectedItems)
+                    {
+                        NewStatus newStatus = (NewStatus)Enum.Parse(typeof(NewStatus), status.Content.ToString());
+                        context.Creations.FirstOrDefault(n => n.CreationId == creation.CreationId).NewStatus = (int)newStatus;
+                        context.SaveChanges();
+                    }
                 }
+                //creationsDataGrid.Items.Refresh();
+                LoadCreationsAndEpisodes();
             }
-            creationsDataGrid.Items.Refresh();
 
             CancelDropdownList();
         }
 
-        private void episodeChangeStatus_Click(object sender, RoutedEventArgs e)
+        private async void episodeChangeStatus_Click(object sender, RoutedEventArgs e)
         {
-            Button status = sender as Button;
-            if (episodesDataGrid != null && episodesDataGrid.SelectedItems != null)
+            ConfirmWindow confirmWindow = new ConfirmWindow(this);
+
+            confirmWindow.ShowDialog();
+
+            if (confirmWindow.Confirmation)
             {
-                foreach (Episode episode in episodesDataGrid.SelectedItems)
+                Button status = sender as Button;
+                if (episodesDataGrid != null && episodesDataGrid.SelectedItems != null)
                 {
-                    WatchStatus watchStatus = (WatchStatus)Enum.Parse(typeof(WatchStatus), status.Content.ToString());
-                    context.Episodes.FirstOrDefault(n => n.EpisodeId == episode.EpisodeId).WatchStatus = (int)watchStatus;
-                    context.SaveChanges();
+                    foreach (Episode episode in episodesDataGrid.SelectedItems)
+                    {
+                        WatchStatus watchStatus = (WatchStatus)Enum.Parse(typeof(WatchStatus), status.Content.ToString());
+                        context.Episodes.FirstOrDefault(n => n.EpisodeId == episode.EpisodeId).WatchStatus = (int)watchStatus;
+                        context.SaveChanges();
+                    }
                 }
+                //episodesDataGrid.Items.Refresh();
+                LoadCreationsAndEpisodes();
             }
-            episodesDataGrid.Items.Refresh();
 
             CancelDropdownList();
         }
@@ -473,14 +498,21 @@ namespace WebScrapperEngine
 
         private void deleteBookmark_Click(object sender, RoutedEventArgs e)
         {
-            if (bookmarksDataGrid != null && bookmarksDataGrid.SelectedItems != null)
-            {
-                foreach (Bookmark bookmark in bookmarksDataGrid.SelectedItems)
-                {
-                    bookmarker.DeleteBookmarkCreation(bookmark);
-                }
+            ConfirmWindow confirmWindow = new ConfirmWindow(this);
 
-                LoadCreationsAndEpisodes();
+            confirmWindow.ShowDialog();
+
+            if(confirmWindow.Confirmation)
+            {
+                if (bookmarksDataGrid != null && bookmarksDataGrid.SelectedItems != null)
+                {
+                    foreach (Bookmark bookmark in bookmarksDataGrid.SelectedItems)
+                    {
+                        bookmarker.DeleteBookmarkCreation(bookmark);
+                    }
+
+                    LoadCreationsAndEpisodes();
+                }
             }
         }
 
@@ -490,13 +522,11 @@ namespace WebScrapperEngine
             {
                 foreach (Bookmark bookmark in bookmarksDataGrid.SelectedItems)
                 {
-                    LinkWindow linkWindow = new LinkWindow(bookmark);
+                    LinkWindow linkWindow = new LinkWindow(bookmark, this);
 
                     linkWindow.Show();
                 }
             }
-
-
         }
 
         private void copyBookmark_Click(object sender, RoutedEventArgs e)
@@ -516,6 +546,9 @@ namespace WebScrapperEngine
             LoadCreationsAndEpisodes();
         }
 
+        #endregion
+        #region DataGridEvents
+
         private void creationsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (sender != null)
@@ -530,6 +563,11 @@ namespace WebScrapperEngine
                             FileName = creation.Link,
                             UseShellExecute = true
                         });
+
+                        context.Creations.FirstOrDefault(n => n.CreationId == creation.CreationId).NewStatus = (int)NewStatus.Seen;
+                        context.SaveChanges();
+
+                        LoadCreationsAndEpisodes();
                     }
                 }
             }

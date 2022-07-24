@@ -173,6 +173,8 @@ namespace WebScrapperEngine.Scrapper
         {
             mainWindow.LoadCreationsAndEpisodes();
 
+            mainWindow.animeEpisodeFilterDotImage.Visibility = Visibility.Hidden;
+
             animeCreationWorker.RunWorkerAsync();
         }
 
@@ -185,7 +187,7 @@ namespace WebScrapperEngine.Scrapper
         {
             mainWindow.LoadCreationsAndEpisodes();
 
-            mainWindow.animeFilterDotImage.Visibility = Visibility.Hidden;
+            mainWindow.animeCreationFilterDotImage.Visibility = Visibility.Hidden;
         }
 
         public class SiteResponse
