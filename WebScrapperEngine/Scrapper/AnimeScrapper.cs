@@ -69,13 +69,16 @@ namespace WebScrapperEngine.Scrapper
             }
             catch (Exception e)
             {
-                mainWindow.exceptionListBox.Items.Add("Bookmark of anime failed! Exception: " + e.GetType().Name);
+                mainWindow.Dispatcher.Invoke(() =>
+                {
+                    mainWindow.exceptionListBox.Items.Add("Bookmark of anime failed! Exception: " + e.GetType().Name);
+                });
             }
         }
 
         public void SearchEpisode()
         {
-            List<Bookmark> bookmarks = context.Bookmarks.Where(n => n.Creation.CreationType == (int)CreationType.Anime).ToList();
+            List<Bookmark> bookmarks = context.Bookmarks.Where(n => n.Creation.CreationType == (int)CreationType.Anime && n.Completed == 0).ToList();
 
             foreach (var bookmark in bookmarks)
             {
@@ -105,6 +108,8 @@ namespace WebScrapperEngine.Scrapper
                                 Link = Kickassanime.websiteLink + data.Slug,
                                 WatchStatus = episodeNumberFonLinQ <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
                             });
+
+                            context.Bookmarks.FirstOrDefault(n => n.BookmarkId == bookmark.BookmarkId).UpdatedAt = DateTime.Now;
                         }
                     }
                     context.SaveChanges();
@@ -112,7 +117,10 @@ namespace WebScrapperEngine.Scrapper
                 }
                 catch (Exception e)
                 {
-                    mainWindow.exceptionListBox.Items.Add("Episode search of anime failed! Exception: " + e.GetType().Name);
+                    mainWindow.Dispatcher.Invoke(() =>
+                    {
+                        mainWindow.exceptionListBox.Items.Add("Episode search of anime failed! Exception: " + e.GetType().Name);
+                    });
                 }
             }
         }
@@ -140,7 +148,8 @@ namespace WebScrapperEngine.Scrapper
                             Title = data.Name != null ? Regex.Replace(data.Name, @"[^0-9a-zA-Z]+", "") : "No name",
                             Link = data.Slug != null ? Regex.Replace(Kickassanime.websiteLink + data.Slug, @"([^\/]+$)", "") : "No link",
                             Image = data.Poster != null ? Kickassanime.websiteLink + Kickassanime.imagePath + data.Poster : "No image",
-                            NewStatus = (int)NewStatus.New
+                            NewStatus = (int)NewStatus.New,
+                            UpdatedAt = DateTime.Now
                         };
 
                         if (!context.Creations.Any(n => n.SiteName == animeCreation.SiteName && n.Title == animeCreation.Title))
@@ -152,17 +161,27 @@ namespace WebScrapperEngine.Scrapper
                 }
                 catch (Exception e)
                 {
-                    mainWindow.exceptionListBox.Items.Add("Creation search of anime failed! Exception: " + e.GetType().Name);
+                    mainWindow.Dispatcher.Invoke(() =>
+                    {
+                        mainWindow.exceptionListBox.Items.Add("Creation search of anime failed! Exception: " + e.GetType().Name);
+                    });
                 }
 
                 index++;
 
             } while (siteResponse.Data.Count() > 0);
         }
+        public bool IsWorkerRunning()
+        {
+            return animeCreationWorker.IsBusy || animeEpisodeWorker.IsBusy;
+        }
 
         public void RunWorker()
         {
             animeEpisodeWorker.RunWorkerAsync();
+
+            mainWindow.animeEpisodeFilterDotImage.Visibility = Visibility.Visible;
+            mainWindow.animeCreationFilterDotImage.Visibility = Visibility.Visible;
         }
         private void AnimeEpisodeWork(object sender, DoWorkEventArgs e)
         {

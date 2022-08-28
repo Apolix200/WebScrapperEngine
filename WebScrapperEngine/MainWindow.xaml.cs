@@ -31,13 +31,8 @@ namespace WebScrapperEngine
     {
         private Context context;
 
-        private DonghuaScrapper donghuaScrapper;
-        private AnimeScrapper animeScrapper;
-        private MangaScrapper mangaScrapper;
-        //private GameScrapper gameScrapper;
-        //private VnScrapper vnScrapper;
-
         private Bookmarker bookmarker;
+        private WebScrapperTimer webScrapperTimer;
 
         private Filter filter;
         private DatasourceFilter datasourceFilter;
@@ -62,11 +57,8 @@ namespace WebScrapperEngine
 
             context = new Context();
 
-            donghuaScrapper = new DonghuaScrapper(this);
-            animeScrapper = new AnimeScrapper(this);
-            mangaScrapper = new MangaScrapper(this);
-
             bookmarker = new Bookmarker(this);
+            webScrapperTimer = new WebScrapperTimer(this);
 
             filter = Filter.All;
             datasourceFilter = DatasourceFilter.Episodes;
@@ -77,125 +69,59 @@ namespace WebScrapperEngine
             imageSize = bigImage ? bigImageSize : smallImageSize;
 
             LoadCreationsAndEpisodes();
-
-            gameCreationFilterDotImage.Visibility = Visibility.Hidden;
-            vnCreationFilterDotImage.Visibility = Visibility.Hidden;
-            gameEpisodeFilterDotImage.Visibility = Visibility.Hidden;
-            vnEpisodeFilterDotImage.Visibility = Visibility.Hidden;
-        }
-        public string MakeRequest(string requestString, string websiteLink)
-        {
-            CookieContainer cookieJar = new CookieContainer();
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestString);
-            request.CookieContainer = cookieJar;
-            request.Accept = @"text/html, application/xhtml+xml, */*";
-            request.Referer = @"https://" + websiteLink;
-            request.Headers.Add("Accept-Language", "en-GB");
-            request.UserAgent = @"Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)";
-            request.Host = websiteLink;
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-            string htmlString;
-            using (var reader = new StreamReader(response.GetResponseStream()))
-            {
-                htmlString = reader.ReadToEnd();
-            }
-            return htmlString;
-        }
-
-        public void CorrectWatchStatus(Bookmark bookmark)
-        {
-            List<Episode> episodes = context.Episodes.Where(n => n.BookmarkId == bookmark.BookmarkId).ToList();
-
-            double? nextEpisode = episodes.FirstOrDefault(n => n.WatchStatus == (int)WatchStatus.NextWatch)?.EpisodeNumber;
-
-            if(nextEpisode == null)
-            {
-                nextEpisode = episodes.FirstOrDefault(n => n.WatchStatus == (int)WatchStatus.LatestWatch)?.EpisodeNumber + 1;
-
-                if(nextEpisode == null)
-                {
-                    nextEpisode = episodes.Where(n => n.WatchStatus == (int)WatchStatus.AlreadyWatch).Max(n => n.EpisodeNumber);
-
-                    if (nextEpisode == null)
-                    {
-                        nextEpisode = 1;
-                    }
-
-                }
-            }
-
-            foreach (var episode in episodes)
-            {
-                if (episode.EpisodeNumber > nextEpisode)
-                {
-                    if(episode.WatchStatus != (int)WatchStatus.NeedToWatch)
-                    {
-                        context.Episodes.FirstOrDefault(n => n.EpisodeId == episode.EpisodeId).WatchStatus = (int)WatchStatus.NeedToWatch;
-                    }
-                }
-                else if (episode.EpisodeNumber == nextEpisode)
-                {
-                    if(episode.WatchStatus != (int)WatchStatus.NextWatch)
-                    {
-                        context.Episodes.FirstOrDefault(n => n.EpisodeId == episode.EpisodeId).WatchStatus = (int)WatchStatus.NextWatch;
-                    }
-                }
-                else if (episode.EpisodeNumber == nextEpisode - 1)
-                {
-                    if(episode.WatchStatus != (int)WatchStatus.LatestWatch)
-                    {
-                        context.Episodes.FirstOrDefault(n => n.EpisodeId == episode.EpisodeId).WatchStatus = (int)WatchStatus.LatestWatch;
-                    }
-                }
-                else
-                {
-                    if(episode.WatchStatus != (int)WatchStatus.AlreadyWatch)
-                    {
-                        context.Episodes.FirstOrDefault(n => n.EpisodeId == episode.EpisodeId).WatchStatus = (int)WatchStatus.AlreadyWatch;
-                    }
-                }
-            }
-            context.SaveChanges();
         }
 
         private void WebScrapper_Loaded(object sender, RoutedEventArgs e)
         {
-            donghuaScrapper.RunWorker();
-            animeScrapper.RunWorker();
-            mangaScrapper.RunWorker();
+            webScrapperTimer.StartTimer();
         }
-        #region GridLoadFilters        
-        private void FilterButtonFocus()
+
+        private void WebScrapperWindow_KeyDown(object sender, KeyEventArgs e)
         {
-            foreach (Button btn in sideMenuFilter.Children)
+            if (e.Key == Key.Space)
             {
-                btn.Background = this.Resources["DarkBrush"] as Brush;
+                switch (datasourceFilter)
+                {
+                    case DatasourceFilter.Creations:
+                        if (creationsDataGrid != null && creationsDataGrid.SelectedItems.Count > 0)
+                        {
+                            Creation creation = creationsDataGrid.SelectedItems[creationsDataGrid.SelectedItems.Count-1] as Creation;
+                            searchDataGridTextBox.Text = creation.Title;
+                        }
+                        break;
+                    case DatasourceFilter.Episodes:
+                        if (episodesDataGrid != null && episodesDataGrid.SelectedItems.Count > 0)
+                        {
+                            Episode episode = episodesDataGrid.SelectedItems[episodesDataGrid.SelectedItems.Count-1] as Episode;
+                            searchDataGridTextBox.Text = episode.Bookmark.Creation.Title;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+                filterText = Regex.Replace(searchDataGridTextBox.Text.ToLower(), @"[^0-9a-zA-Z]+", "");
+
+                LoadCreationsAndEpisodes();
             }
 
-            switch (filter)
+            if (e.Key == Key.LeftAlt)
             {
-                case Filter.All:
-                    allFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
-                    break;
-                case Filter.Donghua:
-                    donghuaFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
-                    break;
-                case Filter.Anime:
-                    animeFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
-                    break;
-                case Filter.Manga:
-                    mangaFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
-                    break;
-                case Filter.Game:
-                    gameFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
-                    break;
-                case Filter.Vn:
-                    vnFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
-                    break;
-                default:
-                    break;
+                searchDataGridTextBox.Text = "";
+                filterText = "";
+
+                LoadCreationsAndEpisodes();
+            }
+
+            if (e.Key == Key.Tab)
+            {
+
             }
         }
+
+        //------------------------------------------------GridLoadFilters------------------------------------------------------
+
+        #region GridLoadFilters        
         private void DatasourceFilterButtonFocus()
         {
             creationsFilterButton.Background = this.Resources["DarkBrush"] as Brush;
@@ -269,9 +195,9 @@ namespace WebScrapperEngine
                     break;
             }
 
-            creationsDataGrid.ItemsSource = creations.OrderBy(o => o.NewStatus).Where(creation => creation.Title.ToLower().Contains(filterText));
-            bookmarksDataGrid.ItemsSource = bookmarks;
-            episodesDataGrid.ItemsSource = episodes.OrderBy(o => o.WatchStatus).Where(episode => episode.Bookmark.Creation.Title.ToLower().Contains(filterText));
+            creationsDataGrid.ItemsSource = creations.Where(creation => creation.Title.ToLower().Contains(filterText)).OrderBy(o => o.NewStatus).ThenByDescending(t => t.UpdatedAt);
+            bookmarksDataGrid.ItemsSource = bookmarks.OrderBy(o => o.Completed).ThenByDescending(t => t.UpdatedAt);
+            episodesDataGrid.ItemsSource = episodes.Where(episode => episode.Bookmark.Creation.Title.ToLower().Contains(filterText)).OrderBy(o => o.WatchStatus).ThenByDescending(t => t.EpisodeNumber);
 
             CancelDropdownList();
             FilterButtonFocus();
@@ -317,14 +243,6 @@ namespace WebScrapperEngine
             datasourceFilter = DatasourceFilter.Episodes;
             LoadCreationsAndEpisodes();
         }
-        private void FilterButton_MouseEnter(object sender, MouseEventArgs e)
-        {
-            sender.GetType().GetProperty("Background").SetValue(sender, this.Resources["HighlightBrush"] as Brush);
-        }
-        private void FilterButton_MouseLeave(object sender, MouseEventArgs e)
-        {
-            FilterButtonFocus();
-        }
         private void DatasourceFilterButton_MouseEnter(object sender, MouseEventArgs e)
         {
             sender.GetType().GetProperty("Background").SetValue(sender, this.Resources["HighlightBrush"] as Brush);
@@ -333,7 +251,59 @@ namespace WebScrapperEngine
         {
             DatasourceFilterButtonFocus();
         }
+        private void RestartTimer_Click(object sender, RoutedEventArgs e)
+        {
+            webScrapperTimer.StartTimer();
+        }
+
         #endregion
+
+        //---------------------------------------------MouseLeaveAndEnter----------------------------------------------------
+
+        #region MouseLeaveAndEnter
+
+        private void FilterButtonFocus()
+        {
+            foreach (Button btn in sideMenuFilter.Children)
+            {
+                btn.Background = this.Resources["DarkBrush"] as Brush;
+            }
+
+            switch (filter)
+            {
+                case Filter.All:
+                    allFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
+                    break;
+                case Filter.Donghua:
+                    donghuaFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
+                    break;
+                case Filter.Anime:
+                    animeFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
+                    break;
+                case Filter.Manga:
+                    mangaFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
+                    break;
+                case Filter.Game:
+                    break;
+                case Filter.Vn:
+                    break;
+                default:
+                    break;
+            }
+        }
+        private void FilterButton_MouseEnter(object sender, MouseEventArgs e)
+        {
+            sender.GetType().GetProperty("Background").SetValue(sender, this.Resources["HighlightBrush"] as Brush);
+        }
+        private void FilterButton_MouseLeave(object sender, MouseEventArgs e)
+        {
+            FilterButtonFocus();
+        }
+
+        #endregion
+
+        //------------------------------------------------ToolbarButtons------------------------------------------------------
+
         #region ToolbarButtons
         private void imageResize_Click(object sender, RoutedEventArgs e)
         {
@@ -408,7 +378,7 @@ namespace WebScrapperEngine
             statusDropDownList.Children.Add(btn);
         }
 
-        private async void creationChangeStatus_Click(object sender, RoutedEventArgs e)
+        private void creationChangeStatus_Click(object sender, RoutedEventArgs e)
         {
             ConfirmWindow confirmWindow = new ConfirmWindow(this);
 
@@ -433,7 +403,7 @@ namespace WebScrapperEngine
             CancelDropdownList();
         }
 
-        private async void episodeChangeStatus_Click(object sender, RoutedEventArgs e)
+        private void episodeChangeStatus_Click(object sender, RoutedEventArgs e)
         {
             ConfirmWindow confirmWindow = new ConfirmWindow(this);
 
@@ -529,6 +499,20 @@ namespace WebScrapperEngine
             }
         }
 
+        private void completeBookmark_Click(object sender, RoutedEventArgs e)
+        {
+            if (bookmarksDataGrid != null && bookmarksDataGrid.SelectedItems != null)
+            {
+                foreach (Bookmark bookmark in bookmarksDataGrid.SelectedItems)
+                {
+                    context.Bookmarks.FirstOrDefault(b => b.BookmarkId == bookmark.BookmarkId).Completed = (bookmark.Completed == 0 ? 1 : 0);
+                }
+                context.SaveChanges();
+
+                LoadCreationsAndEpisodes();
+            }
+        }
+
         private void copyBookmark_Click(object sender, RoutedEventArgs e)
         {
             string clipboardText = "";
@@ -539,6 +523,29 @@ namespace WebScrapperEngine
             Clipboard.SetText(clipboardText);
         }
 
+        private void deleteDuplicates_Click(object sender, RoutedEventArgs e)
+        {
+            var duplicateCreations = context.Creations.GroupBy(a => new { a.CreationType, a.SiteName, a.Title, a.Link })
+             .Where(a => a.Count() > 1)
+             .SelectMany(a => a.ToList());
+
+            var duplicateEpisodes = context.Episodes.GroupBy(a => new { a.BookmarkId, a.EpisodeNumber, a.Link })
+             .Where(a => a.Count() > 1)
+             .SelectMany(a => a.ToList());
+
+            foreach (var d in duplicateCreations)
+            {
+                context.Creations.Remove(d);
+            }
+
+            foreach (var d in duplicateEpisodes)
+            {
+                context.Episodes.Remove(d);
+            }
+
+            context.SaveChanges();
+        }
+
         private void searchFiltered_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
             filterText = Regex.Replace(searchDataGridTextBox.Text.ToLower(), @"[^0-9a-zA-Z]+", "");
@@ -547,6 +554,9 @@ namespace WebScrapperEngine
         }
 
         #endregion
+
+        //------------------------------------------------DataGridEvents------------------------------------------------------
+
         #region DataGridEvents
 
         private void creationsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -583,33 +593,42 @@ namespace WebScrapperEngine
                     foreach (Episode episode in dataGrid.SelectedItems)
                     {
                         List<Episode> sameCreationEpisodes = context.Episodes.Where(n => n.Bookmark.BookmarkId == episode.Bookmark.BookmarkId).ToList();
+
+                        List<Episode> neededToWatchEpisodes = sameCreationEpisodes.Where(n => n.EpisodeNumber > episode.EpisodeNumber).ToList();
+                        List<Episode> alreadyWatchEpisodes = sameCreationEpisodes.Where(n => n.EpisodeNumber <= episode.EpisodeNumber).ToList();
+
+                        double? nextWatchEpisode = neededToWatchEpisodes.Min(m => m.EpisodeNumber);
+                        double? latestWatchEpisode = alreadyWatchEpisodes.Max(m => m.EpisodeNumber);
+
                         foreach (Episode creationEpisode in sameCreationEpisodes)
                         {
-                            if (creationEpisode.EpisodeNumber < episode.EpisodeNumber)
-                            {
-                                context.Episodes.FirstOrDefault(n => n.EpisodeId == creationEpisode.EpisodeId).WatchStatus = (int)WatchStatus.AlreadyWatch;
-                            }
-                            else if (creationEpisode.EpisodeNumber == episode.EpisodeNumber)
-                            {
-                                context.Episodes.FirstOrDefault(n => n.EpisodeId == creationEpisode.EpisodeId).WatchStatus = (int)WatchStatus.LatestWatch;
-                            }
-                            else if (creationEpisode.EpisodeNumber == episode.EpisodeNumber + 1)
+                            if (creationEpisode.EpisodeNumber == nextWatchEpisode)
                             {
                                 context.Episodes.FirstOrDefault(n => n.EpisodeId == creationEpisode.EpisodeId).WatchStatus = (int)WatchStatus.NextWatch;
                             }
-                            else
+                            else if (creationEpisode.EpisodeNumber == latestWatchEpisode)
+                            {
+                                context.Episodes.FirstOrDefault(n => n.EpisodeId == creationEpisode.EpisodeId).WatchStatus = (int)WatchStatus.LatestWatch;
+                            }
+                            else if (neededToWatchEpisodes.Any(a => a.EpisodeNumber == creationEpisode.EpisodeNumber))
                             {
                                 context.Episodes.FirstOrDefault(n => n.EpisodeId == creationEpisode.EpisodeId).WatchStatus = (int)WatchStatus.NeedToWatch;
                             }
+                            else if (alreadyWatchEpisodes.Any(a => a.EpisodeNumber == creationEpisode.EpisodeNumber))
+                            {
+                                context.Episodes.FirstOrDefault(n => n.EpisodeId == creationEpisode.EpisodeId).WatchStatus = (int)WatchStatus.AlreadyWatch;
+                            }
+
                         }
+
+                        context.SaveChanges();
 
                         Process.Start(new ProcessStartInfo
                         {
                             FileName = episode.Link,
                             UseShellExecute = true
                         });
-                    }
-                    context.SaveChanges();
+                    }          
 
                     LoadCreationsAndEpisodes();
                 }
@@ -635,9 +654,103 @@ namespace WebScrapperEngine
             }
         }
 
-    }
-    #endregion
+        private void creationsDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+        }
 
+        private void bookmarksDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+        }
+
+        private void episodesDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+        }
+
+        #endregion
+
+        public string MakeRequest(string requestString, string websiteLink)
+        {
+            CookieContainer cookieJar = new CookieContainer();
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestString);
+            request.CookieContainer = cookieJar;
+            request.Accept = @"text/html, application/xhtml+xml, */*";
+            request.Referer = @"https://" + websiteLink;
+            request.Headers.Add("Accept-Language", "en-GB");
+            request.UserAgent = @"Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)";
+            request.Host = websiteLink;
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            string htmlString;
+            using (var reader = new StreamReader(response.GetResponseStream()))
+            {
+                htmlString = reader.ReadToEnd();
+            }
+            return htmlString;
+        }
+
+        public void CorrectWatchStatus(Bookmark bookmark)
+        {
+            List<Episode> episodes = context.Episodes.Where(n => n.BookmarkId == bookmark.BookmarkId).ToList();
+
+            double? nextEpisode = episodes.FirstOrDefault(n => n.WatchStatus == (int)WatchStatus.NextWatch)?.EpisodeNumber;
+
+            if (nextEpisode == null)
+            {
+                nextEpisode = episodes.FirstOrDefault(n => n.WatchStatus == (int)WatchStatus.LatestWatch)?.EpisodeNumber + 0.0001;
+
+                if (nextEpisode == null)
+                {
+                    nextEpisode = episodes.Where(n => n.WatchStatus == (int)WatchStatus.AlreadyWatch).Max(n => n.EpisodeNumber);
+
+                    if (nextEpisode == null)
+                    {
+                        nextEpisode = 1;
+                    }
+
+                }
+            }
+
+            List<Episode> neededToWatchEpisodes = episodes.Where(n => n.EpisodeNumber >= nextEpisode).ToList();
+            List<Episode> alreadyWatchEpisodes = episodes.Where(n => n.EpisodeNumber < nextEpisode).ToList();
+
+            double? nextWatchEpisode = neededToWatchEpisodes.Min(m => m.EpisodeNumber);
+            double? latestWatchEpisode = alreadyWatchEpisodes.Max(m => m.EpisodeNumber);
+
+            foreach (var episode in episodes)
+            {
+                if (episode.EpisodeNumber == nextWatchEpisode)
+                {
+                    if (episode.WatchStatus != (int)WatchStatus.NextWatch)
+                    {
+                        context.Episodes.FirstOrDefault(n => n.EpisodeId == episode.EpisodeId).WatchStatus = (int)WatchStatus.NextWatch;
+                    }
+                }
+                else if (episode.EpisodeNumber == latestWatchEpisode)
+                {
+                    if (episode.WatchStatus != (int)WatchStatus.LatestWatch)
+                    {
+                        context.Episodes.FirstOrDefault(n => n.EpisodeId == episode.EpisodeId).WatchStatus = (int)WatchStatus.LatestWatch;
+                    }
+                }
+                else if (neededToWatchEpisodes.Any(a => a.EpisodeNumber == episode.EpisodeNumber))
+                {
+                    if (episode.WatchStatus != (int)WatchStatus.NeedToWatch)
+                    {
+                        context.Episodes.FirstOrDefault(n => n.EpisodeId == episode.EpisodeId).WatchStatus = (int)WatchStatus.NeedToWatch;
+                    }
+                }
+                else if (alreadyWatchEpisodes.Any(a => a.EpisodeNumber == episode.EpisodeNumber))
+                {
+                    if (episode.WatchStatus != (int)WatchStatus.AlreadyWatch)
+                    {
+                        context.Episodes.FirstOrDefault(n => n.EpisodeId == episode.EpisodeId).WatchStatus = (int)WatchStatus.AlreadyWatch;
+                    }
+                }
+            }
+
+
+            context.SaveChanges();
+        }
+    }
     public enum Filter
     {
         All,

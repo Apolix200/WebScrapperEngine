@@ -70,13 +70,16 @@ namespace WebScrapperEngine.Scrapper
             }
             catch (Exception e)
             {
-                mainWindow.exceptionListBox.Items.Add("Bookmark of manga failed! Exception: " + e.GetType().Name);
+                mainWindow.Dispatcher.Invoke(() =>
+                {
+                    mainWindow.exceptionListBox.Items.Add("Bookmark of manga failed! Exception: " + e.GetType().Name);
+                });
             }
         }
 
         public void SearchEpisode()
         {
-            List<Bookmark> bookmarks = context.Bookmarks.Where(n => n.Creation.CreationType == (int)CreationType.Manga).ToList();
+            List<Bookmark> bookmarks = context.Bookmarks.Where(n => n.Creation.CreationType == (int)CreationType.Manga && n.Completed == 0).ToList();
 
             foreach (var bookmark in bookmarks)
             {
@@ -108,6 +111,8 @@ namespace WebScrapperEngine.Scrapper
                                 (timesOf > 1 ? "-index-" + timesOf : "") + ".html",
                                 WatchStatus = episodeNumberFonLinQ <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
                             });
+
+                            context.Bookmarks.FirstOrDefault(n => n.BookmarkId == bookmark.BookmarkId).UpdatedAt = DateTime.Now;
                         }
                     }
                     context.SaveChanges();
@@ -115,7 +120,10 @@ namespace WebScrapperEngine.Scrapper
                 }
                 catch (Exception e)
                 {
-                    mainWindow.exceptionListBox.Items.Add("Episode search of manga failed! Exception: " + e.GetType().Name);
+                    mainWindow.Dispatcher.Invoke(() =>
+                    {
+                        mainWindow.exceptionListBox.Items.Add("Episode search of manga failed! Exception: " + e.GetType().Name);
+                    });
                 }
             }
         }
@@ -139,7 +147,8 @@ namespace WebScrapperEngine.Scrapper
                         Title = data.S != null ? Regex.Replace(data.S, @"[^0-9a-zA-Z]+", "") : "No name",
                         Link = data.I != null ? Mangasee.websiteLink + Mangasee.linkPath + data.I : "No link",
                         Image = Mangasee.imagePath + data.I + ".jpg",
-                        NewStatus = (int)NewStatus.New
+                        NewStatus = (int)NewStatus.New,
+                        UpdatedAt = DateTime.Now
                     };
 
                     if (!context.Creations.Any(n => n.SiteName == mangaCreation.SiteName && n.Title == mangaCreation.Title))
@@ -152,13 +161,23 @@ namespace WebScrapperEngine.Scrapper
             }
             catch (Exception e)
             {
-                mainWindow.exceptionListBox.Items.Add("Creation search of manga failed! Exception: " + e.GetType().Name);
+                mainWindow.Dispatcher.Invoke(() =>
+                {
+                    mainWindow.exceptionListBox.Items.Add("Creation search of manga failed! Exception: " + e.GetType().Name);
+                });
             }
+        }
+        public bool IsWorkerRunning()
+        {
+            return mangaCreationWorker.IsBusy || mangaEpisodeWorker.IsBusy;
         }
 
         public void RunWorker()
         {
             mangaEpisodeWorker.RunWorkerAsync();
+
+            mainWindow.mangaEpisodeFilterDotImage.Visibility = Visibility.Visible;
+            mainWindow.mangaCreationFilterDotImage.Visibility = Visibility.Visible;
         }
 
         private void MangaEpisodeWork(object sender, DoWorkEventArgs e)

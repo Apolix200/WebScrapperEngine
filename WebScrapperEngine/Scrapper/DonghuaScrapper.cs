@@ -98,14 +98,17 @@ namespace WebScrapperEngine.Scrapper
             }
             catch (Exception e)
             {
-                mainWindow.exceptionListBox.Items.Add("Bookmark of donghua failed! Exception: " + e.GetType().Name);
+                mainWindow.Dispatcher.Invoke(() =>
+                {
+                    mainWindow.exceptionListBox.Items.Add("Bookmark of donghua failed! Exception: " + e.GetType().Name);
+                });
             }
             
         }
 
         public void SearchEpisode()
         {
-            List<Bookmark> bookmarks = context.Bookmarks.Where(n => n.Creation.CreationType == (int)CreationType.Donghua).ToList();
+            List<Bookmark> bookmarks = context.Bookmarks.Where(n => n.Creation.CreationType == (int)CreationType.Donghua && n.Completed == 0).ToList();
 
             foreach (var bookmark in bookmarks)
             {
@@ -173,6 +176,8 @@ namespace WebScrapperEngine.Scrapper
                                     Link = episodeLink,
                                     WatchStatus = episodeNumberFonLinQ <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
                                 });
+
+                                context.Bookmarks.FirstOrDefault(n => n.BookmarkId == bookmark.BookmarkId).UpdatedAt = DateTime.Now;
                             }
                         }
                         context.SaveChanges();
@@ -181,7 +186,10 @@ namespace WebScrapperEngine.Scrapper
                 }
                 catch (Exception e)
                 {
-                    mainWindow.exceptionListBox.Items.Add("Episode search of donghua failed! Exception: " + e.GetType().Name);
+                    mainWindow.Dispatcher.Invoke(() =>
+                    {
+                        mainWindow.exceptionListBox.Items.Add("Episode search of donghua failed! Exception: " + e.GetType().Name);
+                    });
                 }
 
             }
@@ -210,7 +218,8 @@ namespace WebScrapperEngine.Scrapper
                                 Title = node.SelectSingleNode(Naruldonghua.titlePath).InnerText != null ? Regex.Replace(node.SelectSingleNode(Naruldonghua.titlePath).InnerText, @"[^0-9a-zA-Z]+", "") : null,
                                 Link = node.SelectSingleNode(Naruldonghua.linkPath).GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Naruldonghua.linkPath).GetAttributeValue<string>("href", null) : null,
                                 Image = node.SelectSingleNode(Naruldonghua.imagePath).Attributes[Naruldonghua.imageSrc].Value != null ? node.SelectSingleNode(Naruldonghua.imagePath).Attributes[Naruldonghua.imageSrc].Value : null,
-                                NewStatus = (int)NewStatus.New
+                                NewStatus = (int)NewStatus.New,
+                                UpdatedAt = DateTime.Now
                             };
 
                             if (!context.Creations.Any(n => n.SiteName == donghuaCreation.SiteName && n.Title == donghuaCreation.Title))
@@ -226,7 +235,10 @@ namespace WebScrapperEngine.Scrapper
                 }
                 catch (Exception e)
                 {
-                    mainWindow.exceptionListBox.Items.Add("Creation search of naruldonghua failed! Exception: " + e.GetType().Name);
+                    mainWindow.Dispatcher.Invoke(() =>
+                    {
+                        mainWindow.exceptionListBox.Items.Add("Creation search of naruldonghua failed! Exception: " + e.GetType().Name);
+                    });
                 }
 
                 nextButtonExist = doc.DocumentNode.SelectSingleNode(Naruldonghua.nextButtonPath) != null;
@@ -260,7 +272,8 @@ namespace WebScrapperEngine.Scrapper
                                 Title = node.SelectSingleNode(Animexin.titlePath).InnerText != null ? Regex.Replace(node.SelectSingleNode(Animexin.titlePath).InnerText, @"[^0-9a-zA-Z]+", "") : null,
                                 Link = node.SelectSingleNode(Animexin.linkPath).GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Animexin.linkPath).GetAttributeValue<string>("href", null) : null,
                                 Image = node.SelectSingleNode(Animexin.imagePath).Attributes[Animexin.imageSrc].Value != null ? node.SelectSingleNode(Animexin.imagePath).Attributes[Animexin.imageSrc].Value : null,
-                                NewStatus = (int)NewStatus.New
+                                NewStatus = (int)NewStatus.New,
+                                UpdatedAt = DateTime.Now
                             };
 
                             if (!context.Creations.Any(n => n.SiteName == donghuaCreation.SiteName && n.Title == donghuaCreation.Title))
@@ -276,7 +289,10 @@ namespace WebScrapperEngine.Scrapper
                 }
                 catch (Exception e)
                 {
-                    mainWindow.exceptionListBox.Items.Add("Creation search of animexin failed! Exception: " + e.GetType().Name);
+                    mainWindow.Dispatcher.Invoke(() =>
+                    {
+                        mainWindow.exceptionListBox.Items.Add("Creation search of animexin failed! Exception: " + e.GetType().Name);
+                    });
                 }
 
                 nextButtonExist = doc.DocumentNode.SelectSingleNode(Animexin.nextButtonPath) != null;
@@ -286,9 +302,17 @@ namespace WebScrapperEngine.Scrapper
             } while (nextButtonExist);
         }
 
+        public bool IsWorkerRunning()
+        {
+            return donghuaCreationWorker.IsBusy || donghuaEpisodeWorker.IsBusy;
+        }
+
         public void RunWorker()
         {
             donghuaEpisodeWorker.RunWorkerAsync();
+
+            mainWindow.donghuaEpisodeFilterDotImage.Visibility = Visibility.Visible;
+            mainWindow.donghuaCreationFilterDotImage.Visibility = Visibility.Visible;
         }
         private void DonghuaEpisodeWork(object sender, DoWorkEventArgs e)
         {

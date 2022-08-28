@@ -42,8 +42,10 @@ namespace WebScrapperEngine.Action
                 Bookmark bookmark = new Bookmark()
                 {
                     CreationId = creation.CreationId,
-                    ConnectedId = null
-                };
+                    ConnectedId = null,
+                    Completed = 0,
+                    UpdatedAt = DateTime.Now
+            };
 
                 try
                 {
