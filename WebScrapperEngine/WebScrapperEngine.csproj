@@ -87,6 +87,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Action\Bookmarker.cs" />
+    <Compile Include="Action\PictureSizeSetter.cs" />
     <Compile Include="Action\StringSimilarity.cs" />
     <Compile Include="Action\WebScrapperTimer.cs" />
     <Compile Include="ConfirmWindow.xaml.cs">
@@ -103,12 +104,14 @@
     <Compile Include="Entity\Context.cs" />
     <Compile Include="Entity\Creation.cs" />
     <Compile Include="Entity\Episode.cs" />
+    <Compile Include="Entity\PersonalSetting.cs" />
     <Compile Include="LinkWindow.xaml.cs">
       <DependentUpon>LinkWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Scrapper\AnimeScrapper.cs" />
     <Compile Include="Scrapper\DonghuaScrapper.cs" />
     <Compile Include="Scrapper\MangaScrapper.cs" />
+    <Compile Include="Scrapper\WebtoonScrapper.cs" />
     <Page Include="ConfirmWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

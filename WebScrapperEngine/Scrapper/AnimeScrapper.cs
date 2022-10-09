@@ -71,7 +71,7 @@ namespace WebScrapperEngine.Scrapper
             {
                 mainWindow.Dispatcher.Invoke(() =>
                 {
-                    mainWindow.exceptionListBox.Items.Add("Bookmark of anime failed! Exception: " + e.GetType().Name);
+                    mainWindow.exceptionListBox.Items.Add("Bookmark of anime failed! Exception: " + e.Message);
                 });
             }
         }
@@ -119,7 +119,7 @@ namespace WebScrapperEngine.Scrapper
                 {
                     mainWindow.Dispatcher.Invoke(() =>
                     {
-                        mainWindow.exceptionListBox.Items.Add("Episode search of anime failed! Exception: " + e.GetType().Name);
+                        mainWindow.exceptionListBox.Items.Add("Episode search of anime failed! Exception: " + e.Message);
                     });
                 }
             }
@@ -163,7 +163,7 @@ namespace WebScrapperEngine.Scrapper
                 {
                     mainWindow.Dispatcher.Invoke(() =>
                     {
-                        mainWindow.exceptionListBox.Items.Add("Creation search of anime failed! Exception: " + e.GetType().Name);
+                        mainWindow.exceptionListBox.Items.Add("Creation search of anime failed! Exception: " + e.Message);
                     });
                 }
 

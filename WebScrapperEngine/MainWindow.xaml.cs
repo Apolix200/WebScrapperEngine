@@ -33,6 +33,7 @@ namespace WebScrapperEngine
 
         private Bookmarker bookmarker;
         private WebScrapperTimer webScrapperTimer;
+        private PictureSizeSetter pictureSizeSetter;
 
         private Filter filter;
         private DatasourceFilter datasourceFilter;
@@ -43,13 +44,7 @@ namespace WebScrapperEngine
 
         private BrushConverter bc = new BrushConverter();
 
-        private const int bigImageSize = 120;
-        private const int smallImageSize = 40;
-
         private string filterText;
-        private bool bigImage;
-
-        public int imageSize { get; set; }
 
         public MainWindow()
         {
@@ -59,14 +54,11 @@ namespace WebScrapperEngine
 
             bookmarker = new Bookmarker(this);
             webScrapperTimer = new WebScrapperTimer(this);
-
-            filter = Filter.All;
-            datasourceFilter = DatasourceFilter.Episodes;
+            pictureSizeSetter = new PictureSizeSetter(this, context);
 
             filterText = "";
-            bigImage = false;
-
-            imageSize = bigImage ? bigImageSize : smallImageSize;
+            filter = Filter.All;
+            datasourceFilter = DatasourceFilter.Episodes;
 
             LoadCreationsAndEpisodes();
         }
@@ -78,6 +70,7 @@ namespace WebScrapperEngine
 
         private void WebScrapperWindow_KeyDown(object sender, KeyEventArgs e)
         {
+
             if (e.Key == Key.Space)
             {
                 switch (datasourceFilter)
@@ -105,7 +98,7 @@ namespace WebScrapperEngine
                 LoadCreationsAndEpisodes();
             }
 
-            if (e.Key == Key.LeftAlt)
+            if (e.Key == Key.System)
             {
                 searchDataGridTextBox.Text = "";
                 filterText = "";
@@ -115,30 +108,15 @@ namespace WebScrapperEngine
 
             if (e.Key == Key.Tab)
             {
+                filter = (int)filter < Enum.GetNames(typeof(Filter)).Length - 1 ? (Filter)((int)filter + 1) : Filter.All;
 
+                LoadCreationsAndEpisodes();
             }
         }
 
         //------------------------------------------------GridLoadFilters------------------------------------------------------
 
         #region GridLoadFilters        
-        private void DatasourceFilterButtonFocus()
-        {
-            creationsFilterButton.Background = this.Resources["DarkBrush"] as Brush;
-            episodesFilterButton.Background = this.Resources["DarkBrush"] as Brush;
-
-            switch (datasourceFilter)
-            {
-                case DatasourceFilter.Creations:
-                    creationsFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
-                    break;
-                case DatasourceFilter.Episodes:
-                    episodesFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
-                    break;
-                default:
-                    break;
-            }
-        }
         public void LoadCreationsAndEpisodes()
         {
             creations = new List<Creation>();
@@ -167,15 +145,10 @@ namespace WebScrapperEngine
                     bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Manga).ToList();
                     episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Manga).ToList();
                     break;
-                case Filter.Game:
-                    creations = context.Creations.Where(c => c.CreationType == (int)CreationType.Game).ToList();
-                    bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Game).ToList();
-                    episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Game).ToList();
-                    break;
-                case Filter.Vn:
-                    creations = context.Creations.Where(c => c.CreationType == (int)CreationType.Vn).ToList();
-                    bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Vn).ToList();
-                    episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Vn).ToList();
+                case Filter.Webtoon:
+                    creations = context.Creations.Where(c => c.CreationType == (int)CreationType.Webtoon).ToList();
+                    bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Webtoon).ToList();
+                    episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Webtoon).ToList();
                     break;
                 default:
                     break;
@@ -197,7 +170,7 @@ namespace WebScrapperEngine
 
             creationsDataGrid.ItemsSource = creations.Where(creation => creation.Title.ToLower().Contains(filterText)).OrderBy(o => o.NewStatus).ThenByDescending(t => t.UpdatedAt);
             bookmarksDataGrid.ItemsSource = bookmarks.OrderBy(o => o.Completed).ThenByDescending(t => t.UpdatedAt);
-            episodesDataGrid.ItemsSource = episodes.Where(episode => episode.Bookmark.Creation.Title.ToLower().Contains(filterText)).OrderBy(o => o.WatchStatus).ThenByDescending(t => t.EpisodeNumber);
+            episodesDataGrid.ItemsSource = episodes.Where(episode => episode.Bookmark.Creation.Title.ToLower().Contains(filterText)).OrderBy(o => o.WatchStatus).ThenBy(t => t.Bookmark.Creation.Title).ThenByDescending(t => t.EpisodeNumber);
 
             CancelDropdownList();
             FilterButtonFocus();
@@ -223,14 +196,9 @@ namespace WebScrapperEngine
             filter = Filter.Manga;
             LoadCreationsAndEpisodes();
         }
-        private void LoadGameCreation_Click(object sender, RoutedEventArgs e)
+        private void LoadWebtoonCreation_Click(object sender, RoutedEventArgs e)
         {
-            filter = Filter.Game;
-            LoadCreationsAndEpisodes();
-        }
-        private void LoadVnCreation_Click(object sender, RoutedEventArgs e)
-        {
-            filter = Filter.Vn;
+            filter = Filter.Webtoon;
             LoadCreationsAndEpisodes();
         }
         private void LoadDatasourceCreations_Click(object sender, RoutedEventArgs e)
@@ -242,14 +210,6 @@ namespace WebScrapperEngine
         {
             datasourceFilter = DatasourceFilter.Episodes;
             LoadCreationsAndEpisodes();
-        }
-        private void DatasourceFilterButton_MouseEnter(object sender, MouseEventArgs e)
-        {
-            sender.GetType().GetProperty("Background").SetValue(sender, this.Resources["HighlightBrush"] as Brush);
-        }
-        private void DatasourceFilterButton_MouseLeave(object sender, MouseEventArgs e)
-        {
-            DatasourceFilterButtonFocus();
         }
         private void RestartTimer_Click(object sender, RoutedEventArgs e)
         {
@@ -266,7 +226,14 @@ namespace WebScrapperEngine
         {
             foreach (Button btn in sideMenuFilter.Children)
             {
-                btn.Background = this.Resources["DarkBrush"] as Brush;
+                if (btn.Name == "restartButton")
+                {
+                    btn.Background = webScrapperTimer.RestartIsEnabled() ? this.Resources["LightGreenBrush"] as Brush : this.Resources["RedBrush"] as Brush;
+                }
+                else
+                {
+                    btn.Background = this.Resources["DarkBrush"] as Brush;
+                }
             }
 
             switch (filter)
@@ -283,9 +250,9 @@ namespace WebScrapperEngine
                 case Filter.Manga:
                     mangaFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
                     break;
-                case Filter.Game:
-                    break;
-                case Filter.Vn:
+                //case Filter.Game:
+                //    break;
+                //case Filter.Vn:
                     break;
                 default:
                     break;
@@ -299,6 +266,31 @@ namespace WebScrapperEngine
         {
             FilterButtonFocus();
         }
+        private void DatasourceFilterButtonFocus()
+        {
+            creationsFilterButton.Background = this.Resources["DarkBrush"] as Brush;
+            episodesFilterButton.Background = this.Resources["DarkBrush"] as Brush;
+
+            switch (datasourceFilter)
+            {
+                case DatasourceFilter.Creations:
+                    creationsFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
+                    break;
+                case DatasourceFilter.Episodes:
+                    episodesFilterButton.Background = this.Resources["DarkPressedBrush"] as Brush;
+                    break;
+                default:
+                    break;
+            }
+        }
+        private void DatasourceFilterButton_MouseEnter(object sender, MouseEventArgs e)
+        {
+            sender.GetType().GetProperty("Background").SetValue(sender, this.Resources["HighlightBrush"] as Brush);
+        }
+        private void DatasourceFilterButton_MouseLeave(object sender, MouseEventArgs e)
+        {
+            DatasourceFilterButtonFocus();
+        }
 
         #endregion
 
@@ -307,13 +299,7 @@ namespace WebScrapperEngine
         #region ToolbarButtons
         private void imageResize_Click(object sender, RoutedEventArgs e)
         {
-            bigImage = !bigImage;
-            imageSize = bigImage ? bigImageSize : smallImageSize;
-
-            creationsDataGrid.Items.Refresh();
-            creationsDataGridImage.Width = bigImage ? bigImageSize : smallImageSize + 30;
-            episodesDataGrid.Items.Refresh();
-            episodesdataGridImage.Width = bigImage ? bigImageSize : smallImageSize + 30;
+            pictureSizeSetter.ChangeSize(datasourceFilter);
         }
 
         private void selectAll_Click(object sender, RoutedEventArgs e)
@@ -757,8 +743,7 @@ namespace WebScrapperEngine
         Donghua,
         Anime,
         Manga,
-        Game,
-        Vn
+        Webtoon
     }
 
     public enum DatasourceFilter
@@ -779,7 +764,8 @@ namespace WebScrapperEngine
         Anime,
         Manga,
         Game,
-        Vn
+        Vn,
+        Webtoon
     }
 
     public enum SiteName
@@ -787,8 +773,10 @@ namespace WebScrapperEngine
         Naruldonghua,
         Animexin,
         Kickassanime,
-        Mangasee
+        Mangasee,
+        Webtoonxyz
     }
+
     public enum WatchStatus
     {
         NextWatch,

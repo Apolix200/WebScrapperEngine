@@ -100,7 +100,7 @@ namespace WebScrapperEngine.Scrapper
             {
                 mainWindow.Dispatcher.Invoke(() =>
                 {
-                    mainWindow.exceptionListBox.Items.Add("Bookmark of donghua failed! Exception: " + e.GetType().Name);
+                    mainWindow.exceptionListBox.Items.Add("Bookmark of donghua failed! Exception: " + e.Message);
                 });
             }
             
@@ -123,11 +123,11 @@ namespace WebScrapperEngine.Scrapper
                 {
                     case SiteName.Naruldonghua:
                         nodes = doc.DocumentNode.SelectNodes(Naruldonghua.episodeList);
-                        nodes2 = bookmark.ConnectedId != null ? doc2.DocumentNode.SelectNodes(Naruldonghua.episodeList) : null;
+                        nodes2 = bookmark.ConnectedId != null ? doc2.DocumentNode.SelectNodes(Animexin.episodeList) : null;
                         break;
                     case SiteName.Animexin:
                         nodes = doc.DocumentNode.SelectNodes(Animexin.episodeList);
-                        nodes2 = bookmark.ConnectedId != null ? doc2.DocumentNode.SelectNodes(Animexin.episodeList) : null;
+                        nodes2 = bookmark.ConnectedId != null ? doc2.DocumentNode.SelectNodes(Naruldonghua.episodeList) : null;
                         break;
                     default:
                         nodes = null;
@@ -188,7 +188,7 @@ namespace WebScrapperEngine.Scrapper
                 {
                     mainWindow.Dispatcher.Invoke(() =>
                     {
-                        mainWindow.exceptionListBox.Items.Add("Episode search of donghua failed! Exception: " + e.GetType().Name);
+                        mainWindow.exceptionListBox.Items.Add("Episode search of donghua failed! Exception: " + e.Message);
                     });
                 }
 
@@ -232,12 +232,16 @@ namespace WebScrapperEngine.Scrapper
                             }
                         }
                     }
+                    else
+                    {
+                        throw new ArgumentNullException("Creation search of naruldonghua was null");
+                    }
                 }
                 catch (Exception e)
                 {
                     mainWindow.Dispatcher.Invoke(() =>
                     {
-                        mainWindow.exceptionListBox.Items.Add("Creation search of naruldonghua failed! Exception: " + e.GetType().Name);
+                        mainWindow.exceptionListBox.Items.Add("Creation search of naruldonghua failed! Exception: " + e.Message);
                     });
                 }
 
@@ -291,7 +295,7 @@ namespace WebScrapperEngine.Scrapper
                 {
                     mainWindow.Dispatcher.Invoke(() =>
                     {
-                        mainWindow.exceptionListBox.Items.Add("Creation search of animexin failed! Exception: " + e.GetType().Name);
+                        mainWindow.exceptionListBox.Items.Add("Creation search of animexin failed! Exception: " + e.Message);
                     });
                 }
 
@@ -344,7 +348,7 @@ namespace WebScrapperEngine.Scrapper
         public static class Naruldonghua
         {
             public const string websiteLink = "https://naruldonghua.com";
-            public const string contentPath = "/html/body/div[3]/div/div[3]/div[3]/div[2]/div[1]/article[position()>0]";
+            public const string contentPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[@class='bixbox bbnofrm']/div[@class='listupd normal']/div[@class='excstf']/article[position()>0]";
             public const string nextButtonPath = "/html/body/div[3]/div/div[3]/div[3]/div[2]/div[@class='hpage']/a[@class='r']";
             public const string titlePath = "div/a/div[@class='tt']/text()";
             public const string linkPath = "div/a";
@@ -352,7 +356,7 @@ namespace WebScrapperEngine.Scrapper
             public const string imagePath = "div/a/div[@class='limit']/img";
             public const string imageSrc = "data-src";
 
-            public const string episodeList = "/html/body/div[3]/div/div[3]/article/div[@class='bixbox bxcl epcheck']/div[@class='eplister']/ul/li[position()>0]";
+            public const string episodeList = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[@class='bixbox bxcl epcheck']/div[@class='eplister']/ul/li[position()>0]";
             public const string episodeNumber = "a/div[@class='epl-num']";
             public const string episodeLink = "a";
         }
@@ -360,7 +364,7 @@ namespace WebScrapperEngine.Scrapper
         public static class Animexin
         {
             public const string websiteLink = "https://animexin.xyz";
-            public const string apiPath = "wp-content/cache/gov-cache/ajax/53293a78ade50ac049948a6705a6725e.json?time=1657288651";
+            //public const string apiPath = "wp-content/cache/gov-cache/ajax/53293a78ade50ac049948a6705a6725e.json?time=1657288651";
             public const string contentPath = "/html/body/div[3]/div/div[3]/div[3]/div[2]/div[1]/article[position()>0]";
             public const string nextButtonPath = "/html/body/div[3]/div/div[3]/div[3]/div[2]/div[@class='hpage']/a[@class='r']";
             public const string titlePath = "div/a/div[@class='limit']/div[@class='egghead']/div[@class='eggtitle']/text()";
@@ -369,7 +373,7 @@ namespace WebScrapperEngine.Scrapper
             public const string imagePath = "div/a/div[@class='limit']/img";
             public const string imageSrc = "src";
 
-            public const string episodeList = "/html/body/div[3]/div/div[3]/article/div[@class='bixbox bxcl epcheck']/div[@class='eplister']/ul/li[position()>0]";
+            public const string episodeList = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[@class='bixbox bxcl epcheck']/div[@class='eplister']/ul/li[position()>0]";
             public const string episodeNumber = "a/div[@class='epl-num']";
             public const string episodeLink = "a";
         }

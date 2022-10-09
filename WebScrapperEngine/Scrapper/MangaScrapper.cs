@@ -72,7 +72,7 @@ namespace WebScrapperEngine.Scrapper
             {
                 mainWindow.Dispatcher.Invoke(() =>
                 {
-                    mainWindow.exceptionListBox.Items.Add("Bookmark of manga failed! Exception: " + e.GetType().Name);
+                    mainWindow.exceptionListBox.Items.Add("Bookmark of manga failed! Exception: " + e.Message);
                 });
             }
         }
@@ -122,17 +122,14 @@ namespace WebScrapperEngine.Scrapper
                 {
                     mainWindow.Dispatcher.Invoke(() =>
                     {
-                        mainWindow.exceptionListBox.Items.Add("Episode search of manga failed! Exception: " + e.GetType().Name);
+                        mainWindow.exceptionListBox.Items.Add("Episode search of manga failed! Exception: " + e.Message);
                     });
                 }
             }
         }
 
-
         public void SearchMangaseeSite()
         {
-            List<Creation> creations = new List<Creation>();
-
             try 
             {
                 string siteJson = mainWindow.MakeRequest(Mangasee.websiteLink + Mangasee.apiPath, Mangasee.cuttenWebsiteLink);
@@ -153,17 +150,16 @@ namespace WebScrapperEngine.Scrapper
 
                     if (!context.Creations.Any(n => n.SiteName == mangaCreation.SiteName && n.Title == mangaCreation.Title))
                     {
-                        creations.Add(mangaCreation);
+                        context.Creations.Add(mangaCreation);
+                        context.SaveChanges();
                     }
                 }
-
-                context.BulkInsert(creations);
             }
             catch (Exception e)
             {
                 mainWindow.Dispatcher.Invoke(() =>
                 {
-                    mainWindow.exceptionListBox.Items.Add("Creation search of manga failed! Exception: " + e.GetType().Name);
+                    mainWindow.exceptionListBox.Items.Add("Creation search of manga failed! Exception: " + e.Message);
                 });
             }
         }
