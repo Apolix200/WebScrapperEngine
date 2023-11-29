@@ -1,26 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using WebScrapperEngine.Action;
 using WebScrapperEngine.Entity;
-using WebScrapperEngine.Scrapper;
 
 namespace WebScrapperEngine
 {
@@ -57,8 +48,8 @@ namespace WebScrapperEngine
             pictureSizeSetter = new PictureSizeSetter(this, context);
 
             filterText = "";
-            filter = Filter.All;
-            datasourceFilter = DatasourceFilter.Episodes;
+            filter = (Filter)context.PersonalSettings.First().Filter;
+            datasourceFilter = (DatasourceFilter)context.PersonalSettings.First().DatasourceFilter;
 
             LoadCreationsAndEpisodes();
         }
@@ -127,28 +118,33 @@ namespace WebScrapperEngine
             {
                 case Filter.All:
                     creations = context.Creations.ToList();
-                    episodes = context.Episodes.ToList();
                     bookmarks = context.Bookmarks.ToList();
+                    episodes = context.Episodes.Where(e => e.Bookmark.Completed == 0).ToList();
+                    context.PersonalSettings.First().Filter = (int)Filter.All;
                     break;
                 case Filter.Donghua:
                     creations = context.Creations.Where(c => c.CreationType == (int)CreationType.Donghua).ToList();
                     bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Donghua).ToList();
-                    episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Donghua).ToList();
+                    episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Donghua && e.Bookmark.Completed == 0).ToList();
+                    context.PersonalSettings.First().Filter = (int)Filter.Donghua;
                     break;
                 case Filter.Anime:
                     creations = context.Creations.Where(c => c.CreationType == (int)CreationType.Anime).ToList();
                     bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Anime).ToList();
-                    episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Anime).ToList();
+                    episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Anime && e.Bookmark.Completed == 0).ToList();
+                    context.PersonalSettings.First().Filter = (int)Filter.Anime;
                     break;
                 case Filter.Manga:
                     creations = context.Creations.Where(c => c.CreationType == (int)CreationType.Manga).ToList();
                     bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Manga).ToList();
-                    episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Manga).ToList();
+                    episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Manga && e.Bookmark.Completed == 0).ToList();
+                    context.PersonalSettings.First().Filter = (int)Filter.Manga;
                     break;
                 case Filter.Webtoon:
                     creations = context.Creations.Where(c => c.CreationType == (int)CreationType.Webtoon).ToList();
                     bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Webtoon).ToList();
-                    episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Webtoon).ToList();
+                    episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Webtoon && e.Bookmark.Completed == 0).ToList();
+                    context.PersonalSettings.First().Filter = (int)Filter.Webtoon;
                     break;
                 default:
                     break;
@@ -159,10 +155,12 @@ namespace WebScrapperEngine
                 case DatasourceFilter.Creations:
                     creationsDataGrid.Visibility = Visibility.Visible;
                     episodesDataGrid.Visibility = Visibility.Hidden;
+                    context.PersonalSettings.First().DatasourceFilter = (int)DatasourceFilter.Creations;
                     break;
                 case DatasourceFilter.Episodes:
                     creationsDataGrid.Visibility = Visibility.Hidden;
                     episodesDataGrid.Visibility = Visibility.Visible;
+                    context.PersonalSettings.First().DatasourceFilter = (int)DatasourceFilter.Episodes;
                     break;
                 default:
                     break;
@@ -171,11 +169,13 @@ namespace WebScrapperEngine
             creationsDataGrid.ItemsSource = creations.Where(creation => creation.Title.ToLower().Contains(filterText)).OrderBy(o => o.NewStatus).ThenByDescending(t => t.UpdatedAt);
             bookmarksDataGrid.ItemsSource = bookmarks.OrderBy(o => o.Completed).ThenByDescending(t => t.UpdatedAt);
             episodesDataGrid.ItemsSource = episodes.Where(episode => episode.Bookmark.Creation.Title.ToLower().Contains(filterText)).OrderBy(o => o.WatchStatus).ThenBy(t => t.Bookmark.Creation.Title).ThenByDescending(t => t.EpisodeNumber);
+            context.SaveChanges();
 
             CancelDropdownList();
             FilterButtonFocus();
             DatasourceFilterButtonFocus();
         }
+
         private void LoadAllCreation_Click(object sender, RoutedEventArgs e)
         {
             filter = Filter.All;
@@ -215,6 +215,11 @@ namespace WebScrapperEngine
         {
             webScrapperTimer.StartTimer();
         }
+        private void StopTimer_Click(object sender, RoutedEventArgs e)
+        {
+            webScrapperTimer.StopTimer();
+        }
+
 
         #endregion
 
@@ -253,7 +258,7 @@ namespace WebScrapperEngine
                 //case Filter.Game:
                 //    break;
                 //case Filter.Vn:
-                    break;
+                    //break;
                 default:
                     break;
             }
@@ -297,6 +302,12 @@ namespace WebScrapperEngine
         //------------------------------------------------ToolbarButtons------------------------------------------------------
 
         #region ToolbarButtons
+
+        private void imageRefresh_Click(object sender, RoutedEventArgs e)
+        {
+            webScrapperTimer.RefreshImageStart();
+        }
+
         private void imageResize_Click(object sender, RoutedEventArgs e)
         {
             pictureSizeSetter.ChangeSize(datasourceFilter);
@@ -378,9 +389,9 @@ namespace WebScrapperEngine
                     foreach (Creation creation in creationsDataGrid.SelectedItems)
                     {
                         NewStatus newStatus = (NewStatus)Enum.Parse(typeof(NewStatus), status.Content.ToString());
-                        context.Creations.FirstOrDefault(n => n.CreationId == creation.CreationId).NewStatus = (int)newStatus;
-                        context.SaveChanges();
+                        context.Creations.FirstOrDefault(n => n.CreationId == creation.CreationId).NewStatus = (int)newStatus;                  
                     }
+                    context.SaveChanges();
                 }
                 //creationsDataGrid.Items.Refresh();
                 LoadCreationsAndEpisodes();
@@ -405,12 +416,14 @@ namespace WebScrapperEngine
                         WatchStatus watchStatus = (WatchStatus)Enum.Parse(typeof(WatchStatus), status.Content.ToString());
                         context.Episodes.FirstOrDefault(n => n.EpisodeId == episode.EpisodeId).WatchStatus = (int)watchStatus;
                         context.SaveChanges();
+
+                        //Not most optimzed
+                        CorrectWatchStatus(episode.Bookmark);
                     }
                 }
                 //episodesDataGrid.Items.Refresh();
                 LoadCreationsAndEpisodes();
             }
-
             CancelDropdownList();
         }
 

@@ -14,5 +14,10 @@
         public int EpisodePictureSize { get; set; }
 
         public int CreationPictureSize { get; set; }
+
+        public int Filter { get; set; }
+
+        public int DatasourceFilter { get; set; }
+       
     }
 }

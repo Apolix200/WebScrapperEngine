@@ -29,7 +29,7 @@
         <SolidColorBrush x:Key="DatagridBackgroundBrush" Color="#2e313c" />
         <SolidColorBrush x:Key="ForeGroundBrush" Color="#F0F0F0" />
         <SolidColorBrush x:Key="RedBrush" Color="#bb696c" />
-        <SolidColorBrush x:Key="OrangeBrush" Color="#dd8341"/>
+        <SolidColorBrush x:Key="OrangeBrush" Color="#e17318"/>
         <SolidColorBrush x:Key="LightGreenBrush" Color="#6CA589"/>
         <SolidColorBrush x:Key="DarkGreenBrush" Color="#4D7E66"/>
 
@@ -206,11 +206,16 @@
                     Click="LoadGameCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
                 <Label HorizontalContentAlignment="Center" VerticalAlignment="Center" Padding="10">Game</Label>
             </Button>-->
-            <Button Style="{StaticResource FilterButton}" x:Name="WebtoonFilterButton" Height="100"
+            <!--<Button Style="{StaticResource FilterButton}" x:Name="WebtoonFilterButton" Height="100"
                     Click="LoadWebtoonCreation_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave">
                 <Label HorizontalContentAlignment="Center" VerticalAlignment="Center" Padding="10">Webtoon</Label>
+            </Button>-->
+            <Button Style="{StaticResource FilterButton}" x:Name="stopButton" Height="100" Margin="0,340,0,0"
+                    Click="StopTimer_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave"
+                    Background="{StaticResource LightGreenBrush}" Tag="Restart">
+                <Label HorizontalContentAlignment="Center" VerticalAlignment="Center" Padding="10">Stop</Label>
             </Button>
-            <Button Style="{StaticResource FilterButton}" x:Name="restartButton" Height="100" Margin="0,340,0,0"
+            <Button Style="{StaticResource FilterButton}" x:Name="restartButton" Height="100" Margin="0,0,0,0"
                     Click="RestartTimer_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave"
                     Background="{StaticResource LightGreenBrush}" Tag="Restart">
                 <Label HorizontalContentAlignment="Center" VerticalAlignment="Center" Padding="10">Restart</Label>
@@ -283,15 +288,21 @@
 
         <Button Style="{StaticResource ActionButton}" x:Name="statusChangeButton"
                 HorizontalAlignment="Left"  VerticalAlignment="Top"
-                Margin="945,120,0,0" Height="40" Width="40" 
+                Margin="890,120,0,0" Height="40" Width="40" 
                 Click="changeStatus_Click">
             <Image Width="30" Height="30" Source="/Image/downArrow.png"></Image>
         </Button>
 
         <StackPanel x:Name="statusDropDownList" Orientation="Vertical" 
                     VerticalAlignment="Top" HorizontalAlignment="Left"
-                   Margin="945,120,0,0" Panel.ZIndex="2000" Background="{StaticResource LightBrush}">
+                   Margin="890,120,0,0" Panel.ZIndex="2000" Background="{StaticResource LightBrush}">
         </StackPanel>
+
+        <Button x:Name="imageRefreshButton" Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
+                Margin="945,120,0,0" Height="40" Width="40"
+                Click="imageRefresh_Click">
+            <Image Width="30" Height="30" Source="/imageRefresh.png"></Image>
+        </Button>
 
         <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
                 Margin="1000,120,0,0" Height="40" Width="40"
@@ -392,7 +403,7 @@
                 <DataGridTextColumn Header="Title" Width="*" Binding="{Binding Creation.Title}"/>
                 <DataGridCheckBoxColumn Header="Linked" Width="0.25*" Binding="{Binding ConnectedId,
                     Converter={StaticResource ConnectedId}}" />
-                <DataGridTemplateColumn Header="Image" Width="0.2*">
+                <DataGridTemplateColumn Header="Image" Width="0.25*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Image Source="{Binding Creation.Image}" />

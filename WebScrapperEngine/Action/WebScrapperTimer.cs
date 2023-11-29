@@ -31,14 +31,23 @@ namespace WebScrapperEngine.Action
             webtoonScrapper = new WebtoonScrapper(mainWindow);
 
             timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromSeconds(1);
+            timer.Tick += WebScrapperTimer_Tick;
         }
+
+        public void StopTimer()
+        {
+            donghuaScrapper.StopWorker();
+
+            mainWindow.restartButton.Background = (System.Windows.Media.Brush)mainWindow.Resources["LightGreenBrush"];
+            timer.Stop();
+        }
+
 
         public void StartTimer() 
         {
             if (RestartIsEnabled())
             {
-                timer.Interval = TimeSpan.FromSeconds(1);
-                timer.Tick += WebScrapperTimer_Tick;
                 timer.Start();
 
                 mainWindow.restartButton.Background = (System.Windows.Media.Brush)mainWindow.Resources["RedBrush"];
@@ -52,11 +61,23 @@ namespace WebScrapperEngine.Action
                 donghuaScrapper.RunWorker();
                 animeScrapper.RunWorker();
                 mangaScrapper.RunWorker();
-                webtoonScrapper.RunWorker();
+
+                //webtoonScrapper.RunWorker();
 
                 mainWindow.restartButton.Background = (System.Windows.Media.Brush)mainWindow.Resources["LightGreenBrush"];
                 timer.Stop();
             }
+        }
+
+        public void RefreshImageStart()
+        {
+            if (CheckForInternetConnection())
+            {
+                donghuaScrapper.RunRefreshImageWorker();
+                //animeScrapper.RunRefreshImageWorker();
+                //mangaScrapper.RunRefreshImageWorker();
+            }
+
         }
 
         public bool RestartIsEnabled ()

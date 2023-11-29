@@ -23,6 +23,7 @@ namespace WebScrapperEngine.Action
             this.mainWindow = mainWindow;
             this.context = context;
 
+
             CreationPictureSize = context.PersonalSettings.FirstOrDefault().CreationPictureSize;
             EpisodePictureSize = context.PersonalSettings.FirstOrDefault().EpisodePictureSize;
 

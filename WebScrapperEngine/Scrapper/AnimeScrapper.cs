@@ -38,34 +38,47 @@ namespace WebScrapperEngine.Scrapper
 
         public void BookmarkEpisode(Creation creation, Bookmark bookmark)
         {
-            HtmlWeb web = new HtmlWeb();
-            var doc = web.Load(creation.Link);
-
-            string nodeText = doc.DocumentNode.SelectSingleNode(Kickassanime.episodeList).InnerHtml;
-            int firstStringPosition = nodeText.IndexOf("\"episodes\"") + 11;
-            int secondStringPosition = nodeText.IndexOf("types") - 2;
-
-            string siteJson = nodeText.Substring(firstStringPosition, secondStringPosition - firstStringPosition);
-            var siteResponse = JsonConvert.DeserializeObject<List<EpisodeData>>(siteJson);
 
             try
             {
-                foreach (var data in siteResponse)
+                string link = creation.Link.Replace(Kickassanime.websiteLink + "/", "");
+                string requestString = Kickassanime.websiteLink + Kickassanime.apiEpisodeLink + link;
+                string siteJson = mainWindow.MakeRequest(requestString, Kickassanime.cuttenWebsiteLink);
+                SeriesResponse seriesResponse = JsonConvert.DeserializeObject<SeriesResponse>(siteJson);
+                string nextEpisode = seriesResponse.Watch_uri.Replace("/" + link + "/", "");
+
+                string request = Kickassanime.websiteLink + Kickassanime.apiEpisodeLink + link +  Kickassanime.episodePath + Kickassanime.languageJP;
+                siteJson = mainWindow.MakeRequest(request, Kickassanime.cuttenWebsiteLink);
+                EpisodeResponse episodeResponse = JsonConvert.DeserializeObject<EpisodeResponse>(siteJson);
+
+                var pages = episodeResponse.Pages != null ? episodeResponse.Pages.Count : 1;
+
+                for (int i = 1; i <= pages; i++)
                 {
-                    double episodeNumberFonLinQ = Convert.ToDouble(data.Epnum.Split(' ')[1]);
-                    if (!context.Episodes.Any(n => n.Bookmark.Creation.SiteName == creation.SiteName
-                    && n.Bookmark.Creation.Title == creation.Title && n.EpisodeNumber == episodeNumberFonLinQ))
+                    foreach (var data in episodeResponse.Result)
                     {
-                        context.Episodes.Add(new Episode()
+                        if (!context.Episodes.Any(n => n.Bookmark.Creation.SiteName == creation.SiteName
+                        && n.Bookmark.Creation.Title == creation.Title && n.EpisodeNumber == data.Episode_number))
                         {
-                            BookmarkId = bookmark.BookmarkId,
-                            EpisodeNumber = episodeNumberFonLinQ,
-                            Link = Kickassanime.websiteLink + data.Slug,
-                            WatchStatus = episodeNumberFonLinQ <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
-                        });
+                            context.Episodes.Add(new Episode()
+                            {
+                                BookmarkId = bookmark.BookmarkId,
+                                EpisodeNumber = data.Episode_number,
+                                Link = creation.Link + "/ep-" + data.Episode_number + "-" + data.Slug,
+                                WatchStatus = data.Episode_number <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
+                            });
+                        }
+                    }
+
+                    if (i != pages) {
+                        request = Kickassanime.websiteLink + Kickassanime.apiEpisodeLink + link + Kickassanime.episodePath + Kickassanime.pagePath + (i + 1) + "&" + Kickassanime.languageJP;
+                        siteJson = mainWindow.MakeRequest(request, Kickassanime.cuttenWebsiteLink);
+                        episodeResponse = JsonConvert.DeserializeObject<EpisodeResponse>(siteJson);
                     }
                 }
+
                 context.SaveChanges();
+
             }
             catch (Exception e)
             {
@@ -82,36 +95,47 @@ namespace WebScrapperEngine.Scrapper
 
             foreach (var bookmark in bookmarks)
             {
-                HtmlWeb web = new HtmlWeb();
-                var doc = web.Load(bookmark.Creation.Link);
-
-                string nodeText = doc.DocumentNode.SelectSingleNode(Kickassanime.episodeList).InnerHtml;
-                int firstStringPosition = nodeText.IndexOf("\"episodes\"") + 11;
-                int secondStringPosition = nodeText.IndexOf("types") - 2;
-
-                string siteJson = nodeText.Substring(firstStringPosition, secondStringPosition - firstStringPosition);
-                var siteResponse = JsonConvert.DeserializeObject<List<EpisodeData>>(siteJson);
-
                 try
                 {
+                    string link = bookmark.Creation.Link.Replace(Kickassanime.websiteLink + "/", "");
+                    string requestString = Kickassanime.websiteLink + Kickassanime.apiEpisodeLink + link;
+                    string siteJson = mainWindow.MakeRequest(requestString, Kickassanime.cuttenWebsiteLink);
+                    SeriesResponse seriesResponse = JsonConvert.DeserializeObject<SeriesResponse>(siteJson);
+                    string nextEpisode = seriesResponse.Watch_uri.Replace("/" + link + "/", "");
 
-                    foreach (var data in siteResponse)
+                    string request = Kickassanime.websiteLink + Kickassanime.apiEpisodeLink + link + Kickassanime.episodePath + Kickassanime.languageJP;
+                    siteJson = mainWindow.MakeRequest(request, Kickassanime.cuttenWebsiteLink);
+                    EpisodeResponse episodeResponse = JsonConvert.DeserializeObject<EpisodeResponse>(siteJson);
+
+                    var pages = episodeResponse.Pages != null ? episodeResponse.Pages.Count : 1;
+
+                    for (int i = 1; i <= pages; i++)
                     {
-                        double episodeNumberFonLinQ = Convert.ToDouble(data.Epnum.Split(' ')[1]);
-                        if (!context.Episodes.Any(n => n.Bookmark.Creation.SiteName == bookmark.Creation.SiteName
-                        && n.Bookmark.Creation.Title == bookmark.Creation.Title && n.EpisodeNumber == episodeNumberFonLinQ))
-                        {
-                            context.Episodes.Add(new Episode()
-                            {
-                                BookmarkId = bookmark.BookmarkId,
-                                EpisodeNumber = episodeNumberFonLinQ,
-                                Link = Kickassanime.websiteLink + data.Slug,
-                                WatchStatus = episodeNumberFonLinQ <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
-                            });
 
-                            context.Bookmarks.FirstOrDefault(n => n.BookmarkId == bookmark.BookmarkId).UpdatedAt = DateTime.Now;
+                        foreach (var data in episodeResponse.Result)
+                        {
+                            if (!context.Episodes.Any(n => n.Bookmark.Creation.SiteName == bookmark.Creation.SiteName
+                            && n.Bookmark.Creation.Title == bookmark.Creation.Title && n.EpisodeNumber == data.Episode_number))
+                            {
+                                context.Episodes.Add(new Episode()
+                                {
+                                    BookmarkId = bookmark.BookmarkId,
+                                    EpisodeNumber = data.Episode_number,
+                                    Link = bookmark.Creation.Link + "/ep-" + data.Episode_string + "-" + data.Slug,
+                                    WatchStatus = data.Episode_number <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
+                                });
+
+                                context.Bookmarks.FirstOrDefault(n => n.BookmarkId == bookmark.BookmarkId).UpdatedAt = DateTime.Now;
+                            }
+                        }
+                        if (i != pages)
+                        {
+                            request = Kickassanime.websiteLink + Kickassanime.apiEpisodeLink + link + Kickassanime.episodePath + Kickassanime.pagePath + (i + 1) + "&" + Kickassanime.languageJP;
+                            siteJson = mainWindow.MakeRequest(request, Kickassanime.cuttenWebsiteLink);
+                            episodeResponse = JsonConvert.DeserializeObject<EpisodeResponse>(siteJson);
                         }
                     }
+
                     context.SaveChanges();
                     mainWindow.CorrectWatchStatus(bookmark);
                 }
@@ -127,7 +151,6 @@ namespace WebScrapperEngine.Scrapper
 
         public void SearchKickassSite()
         {
-            //List<Creation> creations = new List<Creation>();
             SiteResponse siteResponse = null;
             string siteJson = "";
             int index = 1;
@@ -139,15 +162,16 @@ namespace WebScrapperEngine.Scrapper
                     siteJson = mainWindow.MakeRequest(Kickassanime.websiteLink + Kickassanime.apiPath + index, Kickassanime.cuttenWebsiteLink);
                     siteResponse = JsonConvert.DeserializeObject<SiteResponse>(siteJson);
 
-                    foreach (var data in siteResponse.Data)
+                    foreach (var data in siteResponse.Result)
                     {
+
                         var animeCreation = new Creation()
                         {
                             CreationType = (int)CreationType.Anime,
                             SiteName = (int)SiteName.Kickassanime,
-                            Title = data.Name != null ? Regex.Replace(data.Name, @"[^0-9a-zA-Z]+", "") : "No name",
-                            Link = data.Slug != null ? Regex.Replace(Kickassanime.websiteLink + data.Slug, @"([^\/]+$)", "") : "No link",
-                            Image = data.Poster != null ? Kickassanime.websiteLink + Kickassanime.imagePath + data.Poster : "No image",
+                            Title = data.Title != null ? Regex.Replace(data.Title, @"[^0-9a-zA-Z]+", "") : "No name",
+                            Link = data.Slug != null ? Kickassanime.websiteLink + "/" + data.Slug : "No link",
+                            Image = data.Poster.Hq != null ? Kickassanime.websiteLink + Kickassanime.imagePath + data.Poster.Hq + ".webp" : "No image",
                             NewStatus = (int)NewStatus.New,
                             UpdatedAt = DateTime.Now
                         };
@@ -169,8 +193,9 @@ namespace WebScrapperEngine.Scrapper
 
                 index++;
 
-            } while (siteResponse.Data.Count() > 0);
+            } while (siteResponse.Result.Count() > 0);
         }
+
         public bool IsWorkerRunning()
         {
             return animeCreationWorker.IsBusy || animeEpisodeWorker.IsBusy;
@@ -183,6 +208,7 @@ namespace WebScrapperEngine.Scrapper
             mainWindow.animeEpisodeFilterDotImage.Visibility = Visibility.Visible;
             mainWindow.animeCreationFilterDotImage.Visibility = Visibility.Visible;
         }
+
         private void AnimeEpisodeWork(object sender, DoWorkEventArgs e)
         {
             SearchEpisode();
@@ -211,38 +237,58 @@ namespace WebScrapperEngine.Scrapper
 
         public class SiteResponse
         {
-            public List<Data> Data { get; set; }
-            public string Page { get; set; }
+            public List<Data> Result { get; set; }
         }
 
         public class Data
         {
-            public string Episode { get; set; }
             public string Slug { get; set; }
-            public string Type { get; set; }
-            public string Episode_date { get; set; }
-            public string Name { get; set; }
-            public string Poster { get; set; }
+            public string Title { get; set; }
+            public Poster Poster { get; set; }
         }
+
+        public class Poster
+        {
+            public string Hq { get; set; }
+        }
+
+        public class SeriesResponse
+        {
+            public string Watch_uri { get; set; }
+        }
+
+        public class EpisodeResponse
+        {
+            public List<PageData> Pages { get; set; }
+            public List<EpisodeData> Result { get; set; }
+        }
+
+        public class PageData
+        {
+            public double Number { get; set; }
+            public string From { get; set; }
+            public string To { get; set; }
+        }
+
 
         public class EpisodeData
         {
-            public string Epnum { get; set; }
-            public string Name { get; set; }
             public string Slug { get; set; }
-            public string Createddate { get; set; }
-            public string Num { get; set; }
+            public double Episode_number { get; set; }
+            public string Episode_string { get; set; }
         }
 
         public static class Kickassanime
         {
-            public const string cuttenWebsiteLink = "www2.kickassanime.ro";
-            public const string websiteLink = "https://www2.kickassanime.ro";
-            public const string apiPath = "/api/get_anime_list/all/";
-            public const string imagePath = "/uploads/";
-            public const string linkToSeriesPath = "/html/body/div[1]/div[1]/div[1]/div/aside/div/div[1]/div/a";
-
-            public const string episodeList = "/html/body/script[4]/text()";
+            public const string cuttenWebsiteLink = "kaas.am";
+            public const string websiteLink = "https://kaas.am";
+            public const string apiPath = "/api/anime?page=";
+            public const string imagePath = "/image/poster/";
+            public const string apiEpisodeLink = "/api/show/";
+            public const string episodePath = "/episodes?";
+            public const string pagePath = "ep=1?&page=";
+            public const string languageJP = "lang=ja-JP";
+            public const string languageEN = "lang=en-US";
         }
     }
 }

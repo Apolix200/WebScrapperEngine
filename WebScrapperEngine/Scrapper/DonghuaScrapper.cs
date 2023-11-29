@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using Microsoft.ClearScript.JavaScript;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -22,6 +23,9 @@ namespace WebScrapperEngine.Scrapper
 
         private BackgroundWorker donghuaCreationWorker = new BackgroundWorker();
         private BackgroundWorker donghuaEpisodeWorker = new BackgroundWorker();
+        private BackgroundWorker donghuaImageRefreshWorker = new BackgroundWorker();
+
+        private bool refreshImageNeeded = false;
 
         public DonghuaScrapper(MainWindow mainWindow)
         {
@@ -34,6 +38,9 @@ namespace WebScrapperEngine.Scrapper
 
             donghuaCreationWorker.DoWork += DonghuaCreationWork;
             donghuaCreationWorker.RunWorkerCompleted += DonghuaCreationWorkCompleted;
+
+            donghuaImageRefreshWorker.DoWork += DonghuaImageRefreshWork;
+            donghuaImageRefreshWorker.RunWorkerCompleted += DonghuaImageRefreshWorkCompleted;
         }
 
         public void BookmarkEpisode(Creation creation, Bookmark bookmark)
@@ -262,32 +269,40 @@ namespace WebScrapperEngine.Scrapper
             {
                 var doc = web.Load(websiteLink);
                 var nodes = doc.DocumentNode.SelectNodes(Animexin.contentPath);
+                var error = doc.DocumentNode.SelectSingleNode(Animexin.contentErrorPath);
 
                 try
                 {
-                    if (nodes != null)
+                    if (error == null)
                     {
-                        foreach (var node in nodes)
+                        if (nodes != null)
                         {
-                            var donghuaCreation = new Creation()
+                            foreach (var node in nodes)
                             {
-                                CreationType = (int)CreationType.Donghua,
-                                SiteName = (int)SiteName.Animexin,
-                                Title = node.SelectSingleNode(Animexin.titlePath).InnerText != null ? Regex.Replace(node.SelectSingleNode(Animexin.titlePath).InnerText, @"[^0-9a-zA-Z]+", "") : null,
-                                Link = node.SelectSingleNode(Animexin.linkPath).GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Animexin.linkPath).GetAttributeValue<string>("href", null) : null,
-                                Image = node.SelectSingleNode(Animexin.imagePath).Attributes[Animexin.imageSrc].Value != null ? node.SelectSingleNode(Animexin.imagePath).Attributes[Animexin.imageSrc].Value : null,
-                                NewStatus = (int)NewStatus.New,
-                                UpdatedAt = DateTime.Now
-                            };
+                                var donghuaCreation = new Creation()
+                                {
+                                    CreationType = (int)CreationType.Donghua,
+                                    SiteName = (int)SiteName.Animexin,
+                                    Title = node.SelectSingleNode(Animexin.titlePath).InnerText != null ? Regex.Replace(node.SelectSingleNode(Animexin.titlePath).InnerText, @"[^0-9a-zA-Z]+", "") : null,
+                                    Link = node.SelectSingleNode(Animexin.linkPath).GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Animexin.linkPath).GetAttributeValue<string>("href", null) : null,
+                                    Image = node.SelectSingleNode(Animexin.imagePath).Attributes[Animexin.imageSrc].Value != null ? node.SelectSingleNode(Animexin.imagePath).Attributes[Animexin.imageSrc].Value : null,
+                                    NewStatus = (int)NewStatus.New,
+                                    UpdatedAt = DateTime.Now
+                                };
 
-                            if (!context.Creations.Any(n => n.SiteName == donghuaCreation.SiteName && n.Title == donghuaCreation.Title))
-                            {
-                                var seriesEpisodeDoc = web.Load(donghuaCreation.Link);
-                                donghuaCreation.Link = seriesEpisodeDoc.DocumentNode.SelectSingleNode(Animexin.linkToSeriesPath) != null ? seriesEpisodeDoc.DocumentNode.SelectSingleNode(Animexin.linkToSeriesPath).GetAttributeValue<string>("href", null) : donghuaCreation.Link;
+                                if (!context.Creations.Any(n => n.SiteName == donghuaCreation.SiteName && n.Title == donghuaCreation.Title))
+                                {
+                                    var seriesEpisodeDoc = web.Load(donghuaCreation.Link);
+                                    donghuaCreation.Link = seriesEpisodeDoc.DocumentNode.SelectSingleNode(Animexin.linkToSeriesPath) != null ? seriesEpisodeDoc.DocumentNode.SelectSingleNode(Animexin.linkToSeriesPath).GetAttributeValue<string>("href", null) : donghuaCreation.Link;
 
-                                context.Creations.Add(donghuaCreation);
-                                context.SaveChanges();
+                                    context.Creations.Add(donghuaCreation);
+                                    context.SaveChanges();
+                                }
                             }
+                        }
+                        else
+                        {
+                            throw new ArgumentNullException("Creation search of animexin was null");
                         }
                     }
                 }
@@ -306,9 +321,60 @@ namespace WebScrapperEngine.Scrapper
             } while (nextButtonExist);
         }
 
+        public void SearchImage()
+        {
+            HtmlWeb web = new HtmlWeb();
+            List<Creation> creations = context.Creations.Where(n => n.CreationType == (int)CreationType.Donghua).ToList();
+            try
+            {      
+                foreach (var creation in creations) 
+                {             
+                    HtmlDocument doc = web.Load(creation.Link);
+
+                    string image = null;
+
+                    switch ((SiteName)creation.SiteName)
+                    {
+                        case SiteName.Naruldonghua:
+                            var node = doc.DocumentNode.Descendants(0).FirstOrDefault(n => n.HasClass(Naruldonghua.imageRefreshClass));
+                            if (node != null)
+                            {
+                                var nodeImage = node.SelectSingleNode(Naruldonghua.imageRefreshPath);
+                                image = nodeImage.Attributes[Naruldonghua.imageRefreshSrc]?.Value;
+                            }          
+                            break;
+                        case SiteName.Animexin:
+                            node = doc.DocumentNode.Descendants(0).FirstOrDefault(n => n.HasClass(Animexin.imageRefreshClass));                          
+                            if (node != null)
+                            {
+                                var nodeImage = node.SelectSingleNode(Animexin.imageRefreshPath);
+                                image = nodeImage.Attributes[Animexin.imageRefreshSrc]?.Value;
+                            }                      
+                            break;
+                        default:
+                            node = null;
+                            break;
+                    }
+
+                    if (image != null)
+                    {
+                        creation.Image = image;
+                        context.SaveChanges();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                mainWindow.Dispatcher.Invoke(() =>
+                {
+                    mainWindow.exceptionListBox.Items.Add("ImageSearch of donghua failed! Exception: " + e.Message);
+                });
+            }
+        }
+
         public bool IsWorkerRunning()
         {
-            return donghuaCreationWorker.IsBusy || donghuaEpisodeWorker.IsBusy;
+            return donghuaCreationWorker.IsBusy || donghuaEpisodeWorker.IsBusy || donghuaImageRefreshWorker.IsBusy;
         }
 
         public void RunWorker()
@@ -343,39 +409,79 @@ namespace WebScrapperEngine.Scrapper
             mainWindow.LoadCreationsAndEpisodes();
 
             mainWindow.donghuaCreationFilterDotImage.Visibility = Visibility.Hidden;
+
+            if (refreshImageNeeded)
+            {
+                donghuaImageRefreshWorker.RunWorkerAsync();
+            }
         }
+
+        public void RunRefreshImageWorker()
+        {
+            if (!IsWorkerRunning())
+            {
+                donghuaImageRefreshWorker.RunWorkerAsync();
+            }
+            else
+            {
+                refreshImageNeeded = true;
+            }
+            mainWindow.imageRefreshButton.Visibility = Visibility.Hidden;
+        }
+
+        private void DonghuaImageRefreshWork(object sender, DoWorkEventArgs e)
+        {
+            SearchImage();
+        }
+
+        private void DonghuaImageRefreshWorkCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            mainWindow.LoadCreationsAndEpisodes();
+
+            mainWindow.imageRefreshButton.Visibility = Visibility.Visible;
+            refreshImageNeeded = false;
+        }
+
 
         public static class Naruldonghua
         {
-            public const string websiteLink = "https://naruldonghua.com";
+            public const string websiteLink = "https://naruldonghua.xyz";
             public const string contentPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[@class='bixbox bbnofrm']/div[@class='listupd normal']/div[@class='excstf']/article[position()>0]";
-            public const string nextButtonPath = "/html/body/div[3]/div/div[3]/div[3]/div[2]/div[@class='hpage']/a[@class='r']";
+            public const string nextButtonPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[@class='bixbox bbnofrm']/div[@class='listupd normal']/div[@class='hpage']/a[@class='r']";
             public const string titlePath = "div/a/div[@class='tt']/text()";
             public const string linkPath = "div/a";
-            public const string linkToSeriesPath = "/html/body/div[3]/div/div[4]/article/div[2]/div/div[1]/div[2]/span[2]/a";
-            public const string imagePath = "div/a/div[@class='limit']/img";
-            public const string imageSrc = "data-src";
-
-            public const string episodeList = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[@class='bixbox bxcl epcheck']/div[@class='eplister']/ul/li[position()>0]";
-            public const string episodeNumber = "a/div[@class='epl-num']";
-            public const string episodeLink = "a";
-        }
-
-        public static class Animexin
-        {
-            public const string websiteLink = "https://animexin.xyz";
-            //public const string apiPath = "wp-content/cache/gov-cache/ajax/53293a78ade50ac049948a6705a6725e.json?time=1657288651";
-            public const string contentPath = "/html/body/div[3]/div/div[3]/div[3]/div[2]/div[1]/article[position()>0]";
-            public const string nextButtonPath = "/html/body/div[3]/div/div[3]/div[3]/div[2]/div[@class='hpage']/a[@class='r']";
-            public const string titlePath = "div/a/div[@class='limit']/div[@class='egghead']/div[@class='eggtitle']/text()";
-            public const string linkToSeriesPath = "/html/body/div[3]/div/div[4]/article/div[2]/div/div[1]/div[2]/span[2]/a";
-            public const string linkPath = "div/a";
+            public const string linkToSeriesPath = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[2]/div/div[1]/div[2]/span[2]/a";
             public const string imagePath = "div/a/div[@class='limit']/img";
             public const string imageSrc = "src";
 
             public const string episodeList = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[@class='bixbox bxcl epcheck']/div[@class='eplister']/ul/li[position()>0]";
             public const string episodeNumber = "a/div[@class='epl-num']";
             public const string episodeLink = "a";
+
+            public const string imageRefreshClass = "thumb";
+            public const string imageRefreshPath = "img";
+            public const string imageRefreshSrc = "data-src";
+        }
+
+        public static class Animexin
+        {
+            public const string websiteLink = "https://animexin.vip";
+            public const string contentPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[@class='bixbox bbnofrm']/div[@class='listupd normal']/div[@class='excstf']/article[position()>0]";
+            public const string contentErrorPath = "/html/body/div[@id='content']/div/div[@class='notf']";
+            public const string nextButtonPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[@class='bixbox bbnofrm']/div[@class='listupd normal']/div[@class='hpage']/a[@class='r']";
+            public const string titlePath = "div/a/div[@class='tt']/text()";
+            public const string linkPath = "div/a";
+            public const string linkToSeriesPath = "/html/body/div[@id='content']/div/div[4]/article/div[2]/div/div[1]/div[2]/span[2]/a";
+            public const string imagePath = "div/a/div[@class='limit']/img";
+            public const string imageSrc = "src";
+
+            public const string episodeList = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[@class='bixbox bxcl epcheck']/div[@class='eplister']/ul/li[position()>0]";
+            public const string episodeNumber = "a/div[@class='epl-num']";
+            public const string episodeLink = "a";
+
+            public const string imageRefreshClass = "thumb";
+            public const string imageRefreshPath = "img";
+            public const string imageRefreshSrc = "data-src";
         }
     }
 }

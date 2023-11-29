@@ -1,12 +1,22 @@
 ﻿using HtmlAgilityPack;
+using Newtonsoft.Json;
+using PuppeteerSharp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Security.Policy;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
+using WebScrapperEngine.Action;
 using WebScrapperEngine.Entity;
+using static WebScrapperEngine.Scrapper.AnimeScrapper;
+using static WebScrapperEngine.Scrapper.DonghuaScrapper;
 
 namespace WebScrapperEngine.Scrapper
 {
@@ -15,6 +25,7 @@ namespace WebScrapperEngine.Scrapper
         private MainWindow mainWindow;
         private HtmlWeb web;
         private Context context;
+        private bool stop = false;
 
         private BackgroundWorker webtoonCreationWorker = new BackgroundWorker();
         private BackgroundWorker webtoonEpisodeWorker = new BackgroundWorker();
@@ -41,57 +52,7 @@ namespace WebScrapperEngine.Scrapper
 
         public void SearchWebtoonSite()
         {
-            string websiteLink = Webtoonxyz.websiteLink;
-            bool nextButtonExist = true;
 
-            do
-            {
-                var doc = web.Load(websiteLink);
-                var nodes = doc.DocumentNode.SelectNodes(Webtoonxyz.contentPath);
-
-                try
-                {
-                    if (nodes != null)
-                    {
-                        foreach (var node in nodes)
-                        {
-                            MessageBox.Show(node.ToString());
-
-                            //var donghuaCreation = new Creation()
-                            //{
-                            //    CreationType = (int)CreationType.Webtoon,
-                            //    SiteName = (int)SiteName.Webtoonxyz,
-                            //    Title = node.SelectSingleNode(Animexin.titlePath).InnerText != null ? Regex.Replace(node.SelectSingleNode(Animexin.titlePath).InnerText, @"[^0-9a-zA-Z]+", "") : null,
-                            //    Link = node.SelectSingleNode(Animexin.linkPath).GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Animexin.linkPath).GetAttributeValue<string>("href", null) : null,
-                            //    Image = node.SelectSingleNode(Animexin.imagePath).Attributes[Animexin.imageSrc].Value != null ? node.SelectSingleNode(Animexin.imagePath).Attributes[Animexin.imageSrc].Value : null,
-                            //    NewStatus = (int)NewStatus.New,
-                            //    UpdatedAt = DateTime.Now
-                            //};
-
-                            //if (!context.Creations.Any(n => n.SiteName == donghuaCreation.SiteName && n.Title == donghuaCreation.Title))
-                            //{
-                            //    var seriesEpisodeDoc = web.Load(donghuaCreation.Link);
-                            //    donghuaCreation.Link = seriesEpisodeDoc.DocumentNode.SelectSingleNode(Animexin.linkToSeriesPath) != null ? seriesEpisodeDoc.DocumentNode.SelectSingleNode(Animexin.linkToSeriesPath).GetAttributeValue<string>("href", null) : donghuaCreation.Link;
-
-                            //    context.Creations.Add(donghuaCreation);
-                            //    context.SaveChanges();
-                            //}
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    mainWindow.Dispatcher.Invoke(() =>
-                    {
-                        mainWindow.exceptionListBox.Items.Add("Creation search of webtoonxyz failed! Exception: " + e.Message);
-                    });
-                }
-
-                //nextButtonExist = doc.DocumentNode.SelectSingleNode(Animexin.nextButtonPath) != null;
-
-                //websiteLink = nextButtonExist ? doc.DocumentNode.SelectSingleNode(Animexin.nextButtonPath).GetAttributeValue<string>("href", null) : null;
-
-            } while (!nextButtonExist);
         }
 
         public bool IsWorkerRunning()
@@ -132,21 +93,18 @@ namespace WebScrapperEngine.Scrapper
 
             mainWindow.webtoonCreationFilterDotImage.Visibility = Visibility.Hidden;
         }
+
+        private void StopWorker()
+        {
+            stop = true;
+        }
+
         public static class Webtoonxyz
         {
-            public const string websiteLink = "https://www.webtoon.xyz";
-            public const string contentPath = "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[1]/div[2]/div/div[2]/div[2]/div/div[1]/div[position()>0]";
-
-            public const string nextButtonPath = "/html/body/div[3]/div/div[3]/div[3]/div[2]/div[@class='hpage']/a[@class='r']";
-            public const string titlePath = "div/a/div[@class='limit']/div[@class='egghead']/div[@class='eggtitle']/text()";
-            public const string linkToSeriesPath = "/html/body/div[3]/div/div[4]/article/div[2]/div/div[1]/div[2]/span[2]/a";
-            public const string linkPath = "div/a";
-            public const string imagePath = "div/a/div[@class='limit']/img";
-            public const string imageSrc = "src";
-
-            public const string episodeList = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[@class='bixbox bxcl epcheck']/div[@class='eplister']/ul/li[position()>0]";
-            public const string episodeNumber = "a/div[@class='epl-num']";
-            public const string episodeLink = "a";
+            public const string websiteLink = "http://www.webtoon.xyz";
+            public const string websiteR18Path = "/?s&post_type=wp-manga&adult=1&m_orderby=latest";
+            public const string contentPath2 = "/html/body/div[1]/div/div[3]/div[2]/div/div/div/div/div[2]/div/div[2]/div/div[1]";
+            public const string contentPath = "/html/body/div[@class='wrap']/div/div[@class='site-content']/div[@class='c-page-content']/div/div/div/div/div[@class='main-col-inner']/div/div[@class='tab-content-wrap']/div/div[position()>0]";
         }
     }
 }
