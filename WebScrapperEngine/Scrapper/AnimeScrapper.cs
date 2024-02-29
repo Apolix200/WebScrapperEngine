@@ -13,6 +13,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using WebScrapperEngine.Entity;
+using static WebScrapperEngine.Scrapper.DonghuaScrapper;
 
 namespace WebScrapperEngine.Scrapper
 {
@@ -23,6 +24,11 @@ namespace WebScrapperEngine.Scrapper
 
         private BackgroundWorker animeCreationWorker = new BackgroundWorker();
         private BackgroundWorker animeEpisodeWorker = new BackgroundWorker();
+        private BackgroundWorker animeImageRefreshWorker = new BackgroundWorker();
+
+        private bool refreshImageNeeded = false;
+
+        public bool StopWorker { get; set; }
 
         public AnimeScrapper(MainWindow mainWindow)
         {
@@ -34,6 +40,9 @@ namespace WebScrapperEngine.Scrapper
 
             animeCreationWorker.DoWork += AnimeCreationWork;
             animeCreationWorker.RunWorkerCompleted += AnimeCreationWorkCompleted;
+
+            animeImageRefreshWorker.DoWork += AnimeImageRefreshWork;
+            animeImageRefreshWorker.RunWorkerCompleted += AnimeImageRefreshWorkCompleted;
         }
 
         public void BookmarkEpisode(Creation creation, Bookmark bookmark)
@@ -95,6 +104,8 @@ namespace WebScrapperEngine.Scrapper
 
             foreach (var bookmark in bookmarks)
             {
+                if (StopWorker) { break; }
+
                 try
                 {
                     string link = bookmark.Creation.Link.Replace(Kickassanime.websiteLink + "/", "");
@@ -157,6 +168,8 @@ namespace WebScrapperEngine.Scrapper
 
             do
             {
+                if (StopWorker) { break; }
+
                 try 
                 {
                     siteJson = mainWindow.MakeRequest(Kickassanime.websiteLink + Kickassanime.apiPath + index, Kickassanime.cuttenWebsiteLink);
@@ -196,13 +209,46 @@ namespace WebScrapperEngine.Scrapper
             } while (siteResponse.Result.Count() > 0);
         }
 
+        public void SearchImage()
+        {
+            HtmlWeb web = new HtmlWeb();
+            List<Creation> creations = context.Creations.Where(n => n.CreationType == (int)CreationType.Anime).ToList();
+            foreach (var creation in creations)
+            {
+                try
+                {
+                    string link = creation.Link.Replace(Kickassanime.websiteLink + "/", "");
+                    string requestString = Kickassanime.websiteLink + Kickassanime.apiEpisodeLink + link;
+                    string siteJson = mainWindow.MakeRequest(requestString, Kickassanime.cuttenWebsiteLink);
+                    SeriesResponse seriesResponse = JsonConvert.DeserializeObject<SeriesResponse>(siteJson);
+
+                    string image = seriesResponse.Poster.Hq != null ? Kickassanime.websiteLink + Kickassanime.imagePath + seriesResponse.Poster.Hq + ".webp" : "No image";
+
+                    if (creation.Image != image)
+                    {
+                        creation.Image = image;
+                        context.SaveChanges();
+                    }
+                }
+                catch (Exception e)
+                {
+                    mainWindow.Dispatcher.Invoke(() =>
+                    {
+                        mainWindow.exceptionListBox.Items.Add("ImageSearch of " + creation.Link + " failed! Exception: " + e.Message);
+                    });
+                }
+            }
+        }
+
         public bool IsWorkerRunning()
         {
-            return animeCreationWorker.IsBusy || animeEpisodeWorker.IsBusy;
+            return animeCreationWorker.IsBusy || animeEpisodeWorker.IsBusy || animeImageRefreshWorker.IsBusy;
         }
 
         public void RunWorker()
         {
+            StopWorker = false;
+
             animeEpisodeWorker.RunWorkerAsync();
 
             mainWindow.animeEpisodeFilterDotImage.Visibility = Visibility.Visible;
@@ -233,6 +279,38 @@ namespace WebScrapperEngine.Scrapper
             mainWindow.LoadCreationsAndEpisodes();
 
             mainWindow.animeCreationFilterDotImage.Visibility = Visibility.Hidden;
+
+            if (refreshImageNeeded)
+            {
+                animeImageRefreshWorker.RunWorkerAsync();
+            }
+        }
+
+        public void RunRefreshImageWorker()
+        {
+            if (!IsWorkerRunning())
+            {
+                animeImageRefreshWorker.RunWorkerAsync();
+            }
+            else
+            {
+                refreshImageNeeded = true;
+            }
+
+            mainWindow.animeImageFilterDotImage.Visibility = Visibility.Visible;
+        }
+
+        private void AnimeImageRefreshWork(object sender, DoWorkEventArgs e)
+        {
+            SearchImage();
+        }
+
+        private void AnimeImageRefreshWorkCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            mainWindow.LoadCreationsAndEpisodes();
+
+            mainWindow.animeImageFilterDotImage.Visibility = Visibility.Hidden;
+            refreshImageNeeded = false;
         }
 
         public class SiteResponse
@@ -254,6 +332,7 @@ namespace WebScrapperEngine.Scrapper
 
         public class SeriesResponse
         {
+            public Poster Poster { get; set; }
             public string Watch_uri { get; set; }
         }
 
@@ -280,8 +359,8 @@ namespace WebScrapperEngine.Scrapper
 
         public static class Kickassanime
         {
-            public const string cuttenWebsiteLink = "kaas.am";
-            public const string websiteLink = "https://kaas.am";
+            public const string cuttenWebsiteLink = "kickassanime.am";
+            public const string websiteLink = "https://kickassanime.am";
             public const string apiPath = "/api/anime?page=";
             public const string imagePath = "/image/poster/";
             public const string apiEpisodeLink = "/api/show/";

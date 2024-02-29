@@ -37,20 +37,19 @@ namespace WebScrapperEngine.Action
 
         public void StopTimer()
         {
-            donghuaScrapper.StopWorker();
-
-            mainWindow.restartButton.Background = (System.Windows.Media.Brush)mainWindow.Resources["LightGreenBrush"];
-            timer.Stop();
+            if (!RestartIsEnabled())
+            {
+                donghuaScrapper.StopWorker = true;
+                animeScrapper.StopWorker = true;
+                mangaScrapper.StopWorker = true;
+            }
         }
-
 
         public void StartTimer() 
         {
             if (RestartIsEnabled())
             {
                 timer.Start();
-
-                mainWindow.restartButton.Background = (System.Windows.Media.Brush)mainWindow.Resources["RedBrush"];
             }
         }
 
@@ -61,10 +60,10 @@ namespace WebScrapperEngine.Action
                 donghuaScrapper.RunWorker();
                 animeScrapper.RunWorker();
                 mangaScrapper.RunWorker();
-
                 //webtoonScrapper.RunWorker();
 
-                mainWindow.restartButton.Background = (System.Windows.Media.Brush)mainWindow.Resources["LightGreenBrush"];
+                mainWindow.restartButton.Background = (System.Windows.Media.Brush)mainWindow.Resources["RedBrush"];
+                mainWindow.stopButton.Background = (System.Windows.Media.Brush)mainWindow.Resources["LightGreenBrush"];
                 timer.Stop();
             }
         }
@@ -74,7 +73,7 @@ namespace WebScrapperEngine.Action
             if (CheckForInternetConnection())
             {
                 donghuaScrapper.RunRefreshImageWorker();
-                //animeScrapper.RunRefreshImageWorker();
+                animeScrapper.RunRefreshImageWorker();
                 //mangaScrapper.RunRefreshImageWorker();
             }
 

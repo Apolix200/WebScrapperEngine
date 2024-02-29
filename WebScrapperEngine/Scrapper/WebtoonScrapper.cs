@@ -25,10 +25,11 @@ namespace WebScrapperEngine.Scrapper
         private MainWindow mainWindow;
         private HtmlWeb web;
         private Context context;
-        private bool stop = false;
 
         private BackgroundWorker webtoonCreationWorker = new BackgroundWorker();
         private BackgroundWorker webtoonEpisodeWorker = new BackgroundWorker();
+
+        public bool StopWorker { get; set; }
 
         public WebtoonScrapper(MainWindow mainWindow)
         {
@@ -92,11 +93,6 @@ namespace WebScrapperEngine.Scrapper
             mainWindow.LoadCreationsAndEpisodes();
 
             mainWindow.webtoonCreationFilterDotImage.Visibility = Visibility.Hidden;
-        }
-
-        private void StopWorker()
-        {
-            stop = true;
         }
 
         public static class Webtoonxyz

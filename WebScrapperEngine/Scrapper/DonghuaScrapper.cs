@@ -27,6 +27,8 @@ namespace WebScrapperEngine.Scrapper
 
         private bool refreshImageNeeded = false;
 
+        public bool StopWorker { get; set; }
+
         public DonghuaScrapper(MainWindow mainWindow)
         {
             this.mainWindow = mainWindow;
@@ -119,6 +121,7 @@ namespace WebScrapperEngine.Scrapper
 
             foreach (var bookmark in bookmarks)
             {
+                if(StopWorker) { break; }
                 HtmlWeb web = new HtmlWeb();
                 var doc = web.Load(bookmark.Creation.Link);
                 var doc2 = bookmark.ConnectedId != null ? web.Load(context.Creations.FirstOrDefault(creation => creation.CreationId == bookmark.ConnectedId).Link) : null;
@@ -209,9 +212,10 @@ namespace WebScrapperEngine.Scrapper
 
             do
             {
+                if (StopWorker) { break; }
+
                 var doc = web.Load(websiteLink);
                 var nodes = doc.DocumentNode.SelectNodes(Naruldonghua.contentPath);
-
                 try
                 {
                     if(nodes != null)
@@ -267,6 +271,8 @@ namespace WebScrapperEngine.Scrapper
 
             do
             {
+                if (StopWorker) { break; }
+
                 var doc = web.Load(websiteLink);
                 var nodes = doc.DocumentNode.SelectNodes(Animexin.contentPath);
                 var error = doc.DocumentNode.SelectSingleNode(Animexin.contentErrorPath);
@@ -325,10 +331,11 @@ namespace WebScrapperEngine.Scrapper
         {
             HtmlWeb web = new HtmlWeb();
             List<Creation> creations = context.Creations.Where(n => n.CreationType == (int)CreationType.Donghua).ToList();
-            try
-            {      
-                foreach (var creation in creations) 
-                {             
+    
+            foreach (var creation in creations) 
+            {
+                try
+                {
                     HtmlDocument doc = web.Load(creation.Link);
 
                     string image = null;
@@ -362,13 +369,13 @@ namespace WebScrapperEngine.Scrapper
                         context.SaveChanges();
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                mainWindow.Dispatcher.Invoke(() =>
+                catch (Exception e)
                 {
-                    mainWindow.exceptionListBox.Items.Add("ImageSearch of donghua failed! Exception: " + e.Message);
-                });
+                    mainWindow.Dispatcher.Invoke(() =>
+                    {
+                        mainWindow.exceptionListBox.Items.Add("ImageSearch of " + creation.Link + " failed! Exception: " + e.Message);
+                    });
+                }
             }
         }
 
@@ -379,6 +386,8 @@ namespace WebScrapperEngine.Scrapper
 
         public void RunWorker()
         {
+            StopWorker = false;
+
             donghuaEpisodeWorker.RunWorkerAsync();
 
             mainWindow.donghuaEpisodeFilterDotImage.Visibility = Visibility.Visible;
@@ -426,7 +435,8 @@ namespace WebScrapperEngine.Scrapper
             {
                 refreshImageNeeded = true;
             }
-            mainWindow.imageRefreshButton.Visibility = Visibility.Hidden;
+
+            mainWindow.donghuaImageFilterDotImage.Visibility = Visibility.Visible;
         }
 
         private void DonghuaImageRefreshWork(object sender, DoWorkEventArgs e)
@@ -438,21 +448,21 @@ namespace WebScrapperEngine.Scrapper
         {
             mainWindow.LoadCreationsAndEpisodes();
 
-            mainWindow.imageRefreshButton.Visibility = Visibility.Visible;
+            mainWindow.donghuaImageFilterDotImage.Visibility = Visibility.Hidden;
             refreshImageNeeded = false;
         }
 
 
         public static class Naruldonghua
         {
-            public const string websiteLink = "https://naruldonghua.xyz";
+            public const string websiteLink = "https://naruldonghua.com";
             public const string contentPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[@class='bixbox bbnofrm']/div[@class='listupd normal']/div[@class='excstf']/article[position()>0]";
             public const string nextButtonPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[@class='bixbox bbnofrm']/div[@class='listupd normal']/div[@class='hpage']/a[@class='r']";
             public const string titlePath = "div/a/div[@class='tt']/text()";
             public const string linkPath = "div/a";
             public const string linkToSeriesPath = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[2]/div/div[1]/div[2]/span[2]/a";
             public const string imagePath = "div/a/div[@class='limit']/img";
-            public const string imageSrc = "src";
+            public const string imageSrc = "data-src";
 
             public const string episodeList = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[@class='bixbox bxcl epcheck']/div[@class='eplister']/ul/li[position()>0]";
             public const string episodeNumber = "a/div[@class='epl-num']";

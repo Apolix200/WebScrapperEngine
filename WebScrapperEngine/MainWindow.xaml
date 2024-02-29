@@ -178,6 +178,12 @@
             </Style.Triggers>
         </Style>
 
+        <Style TargetType="ToolTip">
+            <Setter Property = "HorizontalOffset" Value="10"/>
+            <Setter Property = "VerticalOffset" Value="10"/>
+            <Setter Property = "FontSize" Value="24"/>
+            <Setter Property = "FontWeight" Value="Bold"/>
+        </Style>
 
     </Window.Resources>
 
@@ -212,7 +218,7 @@
             </Button>-->
             <Button Style="{StaticResource FilterButton}" x:Name="stopButton" Height="100" Margin="0,340,0,0"
                     Click="StopTimer_Click" MouseEnter="FilterButton_MouseEnter" MouseLeave="FilterButton_MouseLeave"
-                    Background="{StaticResource LightGreenBrush}" Tag="Restart">
+                    Background="{StaticResource RedBrush}" Tag="Restart">
                 <Label HorizontalContentAlignment="Center" VerticalAlignment="Center" Padding="10">Stop</Label>
             </Button>
             <Button Style="{StaticResource FilterButton}" x:Name="restartButton" Height="100" Margin="0,0,0,0"
@@ -222,6 +228,18 @@
             </Button>
         </WrapPanel>
 
+        <Image x:Name="donghuaImageFilterDotImage" Source="/Image/greenLoadingDot.png" 
+               Height="20" Width="20" Stretch="Uniform" Visibility="Hidden"
+               VerticalAlignment="Top" HorizontalAlignment="Left" Margin="60,170,0,0" />
+        <Image x:Name="animeImageFilterDotImage" Source="/Image/greenLoadingDot.png" 
+               Height="20" Width="20" Stretch="Uniform" Visibility="Hidden"
+               VerticalAlignment="Top" HorizontalAlignment="Left" Margin="60,270,0,0" />
+        <Image x:Name="mangaImageFilterDotImage" Source="/Image/greenLoadingDot.png" 
+               Height="20" Width="20" Stretch="Uniform" Visibility="Hidden"
+               VerticalAlignment="Top" HorizontalAlignment="Left" Margin="60,370,0,0" />
+        <Image x:Name="webtoonImageFilterDotImage" Source="/Image/greenLoadingDot.png" 
+               Height="20" Width="20" Stretch="Uniform" Visibility="Hidden"
+               VerticalAlignment="Top" HorizontalAlignment="Left" Margin="60,470,0,0" />
         <Image x:Name="donghuaCreationFilterDotImage" Source="/Image/redLoadingDot.png" 
                Height="20" Width="20" Stretch="Uniform" Visibility="Hidden"
                VerticalAlignment="Top" HorizontalAlignment="Left" Margin="90,170,0,0" />
@@ -271,8 +289,9 @@
                  HorizontalAlignment="Left"  VerticalAlignment="Top"  Margin="155,120,0,0"
                  KeyUp="searchFiltered_KeyUp"/>
 
-        <Image Height="40" Width="40" 
-                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="615,120,0,0" Source="/Image/search.png" />
+        <Image Height="40" Width="40" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Margin="615,120,0,0" Source="/Image/search.png"
+               ToolTip="Space - Search last selected&#x0a;Alt - Clear search&#x0a;Tab - Switch filters"/>
 
         <!--<Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
                 Margin="890,120,0,0" Height="40" Width="40"
@@ -280,14 +299,15 @@
             <Image Width="30" Height="30" Source="/Image/selectAll.png"></Image>
         </Button>-->
 
-        <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
+        <!--<Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
                 Margin="660,120,0,0" Height="40" Width="40" Background="{StaticResource RedBrush}"
                 Click="deleteDuplicates_Click">
             <Image Width="30" Height="30" Source="/Image/duplicate.png"></Image>
-        </Button>
+        </Button>-->
 
         <Button Style="{StaticResource ActionButton}" x:Name="statusChangeButton"
-                HorizontalAlignment="Left"  VerticalAlignment="Top"
+                ToolTip="Open change status dropdown"
+                HorizontalAlignment="Left" VerticalAlignment="Top"
                 Margin="890,120,0,0" Height="40" Width="40" 
                 Click="changeStatus_Click">
             <Image Width="30" Height="30" Source="/Image/downArrow.png"></Image>
@@ -299,24 +319,28 @@
         </StackPanel>
 
         <Button x:Name="imageRefreshButton" Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
+                ToolTip="Refresh image"
                 Margin="945,120,0,0" Height="40" Width="40"
                 Click="imageRefresh_Click">
-            <Image Width="30" Height="30" Source="/imageRefresh.png"></Image>
+            <Image Width="30" Height="30" Source="/Image/imageRefresh.png"></Image>
         </Button>
 
         <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
+                ToolTip="Change size"
                 Margin="1000,120,0,0" Height="40" Width="40"
                 Click="imageResize_Click">
             <Image Width="30" Height="30" Source="/Image/imageResize.png"></Image>
         </Button>
 
         <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
+                ToolTip="Bookmark creation"
                 Margin="1055,120,0,0" Height="40" Width="40" Background="{StaticResource DarkGreenBrush}"
                 Click="addBookmark_Click">
             <Image Width="30" Height="30" Source="/Image/bookmark.png"></Image>
         </Button>
 
         <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
+                ToolTip="Delete bookmark"
                 Margin="1235,120,0,0" Height="40" Width="40" Background="{StaticResource RedBrush}"
                 FontSize="25"
                 Click="deleteBookmark_Click">
@@ -324,6 +348,7 @@
         </Button>
 
         <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
+                ToolTip="Link it with an another site"
                 Margin="1290,120,0,0" Height="40" Width="40" 
                 FontSize="25"
                 Click="linkBookmark_Click">
@@ -331,6 +356,7 @@
         </Button>
 
         <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
+                ToolTip="Set it to complete"
                 Margin="1345,120,0,0" Height="40" Width="40" 
                 FontSize="25"
                 Click="completeBookmark_Click">
@@ -338,6 +364,7 @@
         </Button>
 
         <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
+                ToolTip="Copy to clipboard"
                 Margin="1645,120,0,0" Height="40" Width="40"  
                 FontSize="25"
                 Click="copyBookmark_Click">
@@ -396,6 +423,7 @@
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended"
                   GridLinesVisibility="None" HeadersVisibility="Column" 
                   CanUserSortColumns = "False" CanUserResizeColumns="False"  
+                  SelectionChanged="bookmarksDataGrid_SelectionChanged"
                   MouseDoubleClick="bookmarksDataGrid_MouseDoubleClick">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Type" Width="0.25*" Binding="{Binding Creation.CreationType,

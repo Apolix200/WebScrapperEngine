@@ -411,7 +411,7 @@
     <Resource Include="Image\imageRefresh.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="imageRefresh.png" />
+    <Resource Include="Image\greenLoadingDot.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

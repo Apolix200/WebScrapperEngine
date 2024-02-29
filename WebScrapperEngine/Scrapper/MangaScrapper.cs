@@ -22,6 +22,8 @@ namespace WebScrapperEngine.Scrapper
         private BackgroundWorker mangaCreationWorker = new BackgroundWorker();
         private BackgroundWorker mangaEpisodeWorker = new BackgroundWorker();
 
+        public bool StopWorker { get; set; }
+
         public MangaScrapper(MainWindow mainWindow)
         {
             this.mainWindow = mainWindow;
@@ -83,6 +85,8 @@ namespace WebScrapperEngine.Scrapper
 
             foreach (var bookmark in bookmarks)
             {
+                if (StopWorker) { break; }
+
                 HtmlWeb web = new HtmlWeb();
                 var doc = web.Load(bookmark.Creation.Link);
 
@@ -137,6 +141,8 @@ namespace WebScrapperEngine.Scrapper
 
                 foreach (var data in siteResponse)
                 {
+                    if (StopWorker) { break; }
+
                     var mangaCreation = new Creation()
                     {
                         CreationType = (int)CreationType.Manga,
@@ -163,6 +169,7 @@ namespace WebScrapperEngine.Scrapper
                 });
             }
         }
+
         public bool IsWorkerRunning()
         {
             return mangaCreationWorker.IsBusy || mangaEpisodeWorker.IsBusy;
@@ -170,6 +177,8 @@ namespace WebScrapperEngine.Scrapper
 
         public void RunWorker()
         {
+            StopWorker = false;
+
             mangaEpisodeWorker.RunWorkerAsync();
 
             mainWindow.mangaEpisodeFilterDotImage.Visibility = Visibility.Visible;

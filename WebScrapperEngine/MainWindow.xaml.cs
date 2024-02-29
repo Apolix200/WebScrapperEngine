@@ -33,9 +33,8 @@ namespace WebScrapperEngine
         private List<Bookmark> bookmarks = new List<Bookmark>();
         private List<Episode> episodes = new List<Episode>();
 
-        private BrushConverter bc = new BrushConverter();
-
         private string filterText;
+        private Creation lastSelected;
 
         public MainWindow()
         {
@@ -64,25 +63,7 @@ namespace WebScrapperEngine
 
             if (e.Key == Key.Space)
             {
-                switch (datasourceFilter)
-                {
-                    case DatasourceFilter.Creations:
-                        if (creationsDataGrid != null && creationsDataGrid.SelectedItems.Count > 0)
-                        {
-                            Creation creation = creationsDataGrid.SelectedItems[creationsDataGrid.SelectedItems.Count-1] as Creation;
-                            searchDataGridTextBox.Text = creation.Title;
-                        }
-                        break;
-                    case DatasourceFilter.Episodes:
-                        if (episodesDataGrid != null && episodesDataGrid.SelectedItems.Count > 0)
-                        {
-                            Episode episode = episodesDataGrid.SelectedItems[episodesDataGrid.SelectedItems.Count-1] as Episode;
-                            searchDataGridTextBox.Text = episode.Bookmark.Creation.Title;
-                        }
-                        break;
-                    default:
-                        break;
-                }
+                searchDataGridTextBox.Text = lastSelected.Title;
 
                 filterText = Regex.Replace(searchDataGridTextBox.Text.ToLower(), @"[^0-9a-zA-Z]+", "");
 
@@ -234,6 +215,10 @@ namespace WebScrapperEngine
                 if (btn.Name == "restartButton")
                 {
                     btn.Background = webScrapperTimer.RestartIsEnabled() ? this.Resources["LightGreenBrush"] as Brush : this.Resources["RedBrush"] as Brush;
+                }
+                else if (btn.Name == "stopButton")
+                {
+                    btn.Background = webScrapperTimer.RestartIsEnabled() ? this.Resources["RedBrush"] as Brush : this.Resources["LightGreenBrush"] as Brush;
                 }
                 else
                 {
@@ -655,14 +640,31 @@ namespace WebScrapperEngine
 
         private void creationsDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            DataGrid dataGrid = sender as DataGrid;
+            if(dataGrid != null && dataGrid.SelectedItems.Count > 0)
+            {
+                lastSelected = dataGrid.SelectedItems[dataGrid.SelectedItems.Count - 1] as Creation;
+            }
         }
 
         private void bookmarksDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            DataGrid dataGrid = sender as DataGrid;
+            if (dataGrid != null && dataGrid.SelectedItems.Count > 0)
+            {
+                Bookmark bookmark = dataGrid.SelectedItems[dataGrid.SelectedItems.Count - 1] as Bookmark;
+                lastSelected = bookmark.Creation;
+            }
         }
 
         private void episodesDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            DataGrid dataGrid = sender as DataGrid;
+            if (dataGrid != null && dataGrid.SelectedItems.Count > 0)
+            {
+                Episode bookmark = dataGrid.SelectedItems[dataGrid.SelectedItems.Count - 1] as Episode;
+                lastSelected = bookmark.Bookmark.Creation;
+            }
         }
 
         #endregion
@@ -688,7 +690,7 @@ namespace WebScrapperEngine
 
         public void CorrectWatchStatus(Bookmark bookmark)
         {
-            List<Episode> episodes = context.Episodes.Where(n => n.BookmarkId == bookmark.BookmarkId).ToList();
+            List<Episode> episodes = context.Episodes.Where(n => n.BookmarkId == bookmark.BookmarkId).OrderBy(o => o.EpisodeNumber).ToList();
 
             double? nextEpisode = episodes.FirstOrDefault(n => n.WatchStatus == (int)WatchStatus.NextWatch)?.EpisodeNumber;
 
