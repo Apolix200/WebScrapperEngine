@@ -66,7 +66,7 @@ namespace WebScrapperEngine.Scrapper
 
             try
             {
-                if(nodes != null)
+                if (nodes != null)
                 {
                     foreach (var node in nodes)
                     {
@@ -112,22 +112,26 @@ namespace WebScrapperEngine.Scrapper
                     mainWindow.exceptionListBox.Items.Add("Bookmark of donghua failed! Exception: " + e.Message);
                 });
             }
-            
+
         }
 
         public void SearchEpisode()
         {
             List<Bookmark> bookmarks = context.Bookmarks.Where(n => n.Creation.CreationType == (int)CreationType.Donghua && n.Completed == 0).ToList();
+            HtmlNodeCollection nodes;
+            HtmlNodeCollection nodes2;
 
             foreach (var bookmark in bookmarks)
             {
-                if(StopWorker) { break; }
-                HtmlWeb web = new HtmlWeb();
+                if (StopWorker) { break; }
                 var doc = web.Load(bookmark.Creation.Link);
                 var doc2 = bookmark.ConnectedId != null ? web.Load(context.Creations.FirstOrDefault(creation => creation.CreationId == bookmark.ConnectedId).Link) : null;
 
-                HtmlNodeCollection nodes;
-                HtmlNodeCollection nodes2;
+                nodes = null;
+                nodes2 = null;
+
+                string episodeNumber;
+                string episodeLink;
 
                 switch ((SiteName)bookmark.Creation.SiteName)
                 {
@@ -140,8 +144,6 @@ namespace WebScrapperEngine.Scrapper
                         nodes2 = bookmark.ConnectedId != null ? doc2.DocumentNode.SelectNodes(Naruldonghua.episodeList) : null;
                         break;
                     default:
-                        nodes = null;
-                        nodes2 = null;
                         break;
                 }
 
@@ -156,38 +158,37 @@ namespace WebScrapperEngine.Scrapper
 
                         foreach (var node in nodes)
                         {
-                            string episodeNumber;
-                            string episodeLink;
+                            episodeNumber = null;
+                            episodeLink = null;
 
                             switch ((SiteName)bookmark.Creation.SiteName)
                             {
                                 case SiteName.Naruldonghua:
                                     episodeNumber = node.SelectSingleNode(Naruldonghua.episodeNumber) != null ? Regex.Replace(node.SelectSingleNode(Naruldonghua.episodeNumber).InnerText, @"[^0-9a-zA-Z]+", " ").Split(' ')[0] : null;
-                                    episodeLink = node.SelectSingleNode(Naruldonghua.episodeLink).GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Naruldonghua.episodeLink).GetAttributeValue<string>("href", null) : null;
+                                    episodeLink = node.SelectSingleNode(Naruldonghua.episodeLink)?.GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Naruldonghua.episodeLink).GetAttributeValue<string>("href", null) : null;
                                     break;
                                 case SiteName.Animexin:
                                     episodeNumber = node.SelectSingleNode(Animexin.episodeNumber) != null ? Regex.Replace(node.SelectSingleNode(Animexin.episodeNumber).InnerText, @"[^0-9a-zA-Z]+", " ").Split(' ')[0] : null;
-                                    episodeLink = node.SelectSingleNode(Animexin.episodeLink).GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Animexin.episodeLink).GetAttributeValue<string>("href", null) : null;
+                                    episodeLink = node.SelectSingleNode(Animexin.episodeLink)?.GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Animexin.episodeLink).GetAttributeValue<string>("href", null) : null;
                                     break;
                                 default:
-                                    episodeNumber = null;
-                                    episodeLink = null;
                                     break;
                             }
-
-                            double episodeNumberFonLinQ = Convert.ToDouble(episodeNumber);
-                            if (!context.Episodes.Any(n => n.Bookmark.Creation.SiteName == bookmark.Creation.SiteName
-                            && n.Bookmark.Creation.Title == bookmark.Creation.Title && n.EpisodeNumber == episodeNumberFonLinQ))
-                            {
-                                context.Episodes.Add(new Episode()
+                            if (Double.TryParse(episodeNumber, out double episodeNumberFonLinQ))
+                            {                           
+                                if (!context.Episodes.Any(n => n.Bookmark.Creation.SiteName == bookmark.Creation.SiteName
+                                && n.Bookmark.Creation.Title == bookmark.Creation.Title && n.EpisodeNumber == episodeNumberFonLinQ))
                                 {
-                                    BookmarkId = bookmark.BookmarkId,
-                                    EpisodeNumber = episodeNumberFonLinQ,
-                                    Link = episodeLink,
-                                    WatchStatus = episodeNumberFonLinQ <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
-                                });
+                                    context.Episodes.Add(new Episode()
+                                    {
+                                        BookmarkId = bookmark.BookmarkId,
+                                        EpisodeNumber = episodeNumberFonLinQ,
+                                        Link = episodeLink,
+                                        WatchStatus = episodeNumberFonLinQ <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
+                                    });
 
-                                context.Bookmarks.FirstOrDefault(n => n.BookmarkId == bookmark.BookmarkId).UpdatedAt = DateTime.Now;
+                                    context.Bookmarks.FirstOrDefault(n => n.BookmarkId == bookmark.BookmarkId).UpdatedAt = DateTime.Now;
+                                }
                             }
                         }
                         context.SaveChanges();
@@ -210,25 +211,33 @@ namespace WebScrapperEngine.Scrapper
             string websiteLink = Naruldonghua.websiteLink;
             bool nextButtonExist = true;
 
+            HtmlNodeCollection nodes;
+            string Title;
+            string Link;
+            string Image;
+
             do
             {
                 if (StopWorker) { break; }
 
                 var doc = web.Load(websiteLink);
-                var nodes = doc.DocumentNode.SelectNodes(Naruldonghua.contentPath);
+                nodes = doc.DocumentNode.SelectNodes(Naruldonghua.contentPath);
                 try
                 {
-                    if(nodes != null)
+                    if (nodes != null)
                     {
                         foreach (var node in nodes)
                         {
+                            Title = node.SelectSingleNode(Naruldonghua.titlePath)?.InnerText != null ? Regex.Replace(node.SelectSingleNode(Naruldonghua.titlePath).InnerText, @"[^0-9a-zA-Z]+", "") : null;
+                            Link = node.SelectSingleNode(Naruldonghua.linkPath)?.GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Naruldonghua.linkPath).GetAttributeValue<string>("href", null) : null;
+                            Image = node.SelectSingleNode(Naruldonghua.imagePath)?.Attributes[Naruldonghua.imageSrc].Value != null ? node.SelectSingleNode(Naruldonghua.imagePath).Attributes[Naruldonghua.imageSrc].Value : null;
                             var donghuaCreation = new Creation()
                             {
                                 CreationType = (int)CreationType.Donghua,
                                 SiteName = (int)SiteName.Naruldonghua,
-                                Title = node.SelectSingleNode(Naruldonghua.titlePath).InnerText != null ? Regex.Replace(node.SelectSingleNode(Naruldonghua.titlePath).InnerText, @"[^0-9a-zA-Z]+", "") : null,
-                                Link = node.SelectSingleNode(Naruldonghua.linkPath).GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Naruldonghua.linkPath).GetAttributeValue<string>("href", null) : null,
-                                Image = node.SelectSingleNode(Naruldonghua.imagePath).Attributes[Naruldonghua.imageSrc].Value != null ? node.SelectSingleNode(Naruldonghua.imagePath).Attributes[Naruldonghua.imageSrc].Value : null,
+                                Title = Title,
+                                Link = Link,
+                                Image = Image,
                                 NewStatus = (int)NewStatus.New,
                                 UpdatedAt = DateTime.Now
                             };
@@ -269,12 +278,17 @@ namespace WebScrapperEngine.Scrapper
             string websiteLink = Animexin.websiteLink;
             bool nextButtonExist = true;
 
+            HtmlNodeCollection nodes;
+            string Title;
+            string Link;
+            string Image;
+
             do
             {
                 if (StopWorker) { break; }
 
                 var doc = web.Load(websiteLink);
-                var nodes = doc.DocumentNode.SelectNodes(Animexin.contentPath);
+                nodes = doc.DocumentNode.SelectNodes(Animexin.contentPath);
                 var error = doc.DocumentNode.SelectSingleNode(Animexin.contentErrorPath);
 
                 try
@@ -285,13 +299,16 @@ namespace WebScrapperEngine.Scrapper
                         {
                             foreach (var node in nodes)
                             {
+                                Title = node.SelectSingleNode(Animexin.titlePath)?.InnerText != null ? Regex.Replace(node.SelectSingleNode(Animexin.titlePath).InnerText, @"[^0-9a-zA-Z]+", "") : null;
+                                Link = node.SelectSingleNode(Animexin.linkPath)?.GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Animexin.linkPath).GetAttributeValue<string>("href", null) : null;
+                                Image = node.SelectSingleNode(Animexin.imagePath)?.Attributes[Animexin.imageSrc].Value != null ? node.SelectSingleNode(Animexin.imagePath).Attributes[Animexin.imageSrc].Value : null;
                                 var donghuaCreation = new Creation()
                                 {
                                     CreationType = (int)CreationType.Donghua,
                                     SiteName = (int)SiteName.Animexin,
-                                    Title = node.SelectSingleNode(Animexin.titlePath).InnerText != null ? Regex.Replace(node.SelectSingleNode(Animexin.titlePath).InnerText, @"[^0-9a-zA-Z]+", "") : null,
-                                    Link = node.SelectSingleNode(Animexin.linkPath).GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Animexin.linkPath).GetAttributeValue<string>("href", null) : null,
-                                    Image = node.SelectSingleNode(Animexin.imagePath).Attributes[Animexin.imageSrc].Value != null ? node.SelectSingleNode(Animexin.imagePath).Attributes[Animexin.imageSrc].Value : null,
+                                    Title = Title,
+                                    Link = Link,
+                                    Image = Image,
                                     NewStatus = (int)NewStatus.New,
                                     UpdatedAt = DateTime.Now
                                 };
@@ -331,8 +348,8 @@ namespace WebScrapperEngine.Scrapper
         {
             HtmlWeb web = new HtmlWeb();
             List<Creation> creations = context.Creations.Where(n => n.CreationType == (int)CreationType.Donghua).ToList();
-    
-            foreach (var creation in creations) 
+
+            foreach (var creation in creations)
             {
                 try
                 {
@@ -348,15 +365,15 @@ namespace WebScrapperEngine.Scrapper
                             {
                                 var nodeImage = node.SelectSingleNode(Naruldonghua.imageRefreshPath);
                                 image = nodeImage.Attributes[Naruldonghua.imageRefreshSrc]?.Value;
-                            }          
+                            }
                             break;
                         case SiteName.Animexin:
-                            node = doc.DocumentNode.Descendants(0).FirstOrDefault(n => n.HasClass(Animexin.imageRefreshClass));                          
+                            node = doc.DocumentNode.Descendants(0).FirstOrDefault(n => n.HasClass(Animexin.imageRefreshClass));
                             if (node != null)
                             {
                                 var nodeImage = node.SelectSingleNode(Animexin.imageRefreshPath);
                                 image = nodeImage.Attributes[Animexin.imageRefreshSrc]?.Value;
-                            }                      
+                            }
                             break;
                         default:
                             node = null;
@@ -456,8 +473,8 @@ namespace WebScrapperEngine.Scrapper
         public static class Naruldonghua
         {
             public const string websiteLink = "https://naruldonghua.com";
-            public const string contentPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[@class='bixbox bbnofrm']/div[@class='listupd normal']/div[@class='excstf']/article[position()>0]";
-            public const string nextButtonPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[@class='bixbox bbnofrm']/div[@class='listupd normal']/div[@class='hpage']/a[@class='r']";
+            public const string contentPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[@class='bixbox bbnofrm'][2]/div[@class='listupd normal']/div[@class='excstf']/article[position()>0]";
+            public const string nextButtonPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[@class='bixbox bbnofrm'][2]/div[@class='listupd normal']/div[@class='hpage']/a[@class='r']";
             public const string titlePath = "div/a/div[@class='tt']/text()";
             public const string linkPath = "div/a";
             public const string linkToSeriesPath = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[2]/div/div[1]/div[2]/span[2]/a";
@@ -475,10 +492,10 @@ namespace WebScrapperEngine.Scrapper
 
         public static class Animexin
         {
-            public const string websiteLink = "https://animexin.vip";
-            public const string contentPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[@class='bixbox bbnofrm']/div[@class='listupd normal']/div[@class='excstf']/article[position()>0]";
+            public const string websiteLink = "https://animexin.net";
+            public const string contentPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[2]/div[@class='listupd normal']/div[@class='excstf']/article[position()>0]";
             public const string contentErrorPath = "/html/body/div[@id='content']/div/div[@class='notf']";
-            public const string nextButtonPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[@class='bixbox bbnofrm']/div[@class='listupd normal']/div[@class='hpage']/a[@class='r']";
+            public const string nextButtonPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[2]/div[@class='listupd normal']/div[@class='hpage']/a[@class='r']";
             public const string titlePath = "div/a/div[@class='tt']/text()";
             public const string linkPath = "div/a";
             public const string linkToSeriesPath = "/html/body/div[@id='content']/div/div[4]/article/div[2]/div/div[1]/div[2]/span[2]/a";
@@ -492,6 +509,7 @@ namespace WebScrapperEngine.Scrapper
             public const string imageRefreshClass = "thumb";
             public const string imageRefreshPath = "img";
             public const string imageRefreshSrc = "data-src";
+
         }
     }
 }

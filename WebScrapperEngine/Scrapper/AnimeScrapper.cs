@@ -47,7 +47,6 @@ namespace WebScrapperEngine.Scrapper
 
         public void BookmarkEpisode(Creation creation, Bookmark bookmark)
         {
-
             try
             {
                 string link = creation.Link.Replace(Kickassanime.websiteLink + "/", "");
