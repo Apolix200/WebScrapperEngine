@@ -97,10 +97,6 @@ namespace WebScrapperEngine.Scrapper
 
         public static class Webtoonxyz
         {
-            public const string websiteLink = "http://www.webtoon.xyz";
-            public const string websiteR18Path = "/?s&post_type=wp-manga&adult=1&m_orderby=latest";
-            public const string contentPath2 = "/html/body/div[1]/div/div[3]/div[2]/div/div/div/div/div[2]/div/div[2]/div/div[1]";
-            public const string contentPath = "/html/body/div[@class='wrap']/div/div[@class='site-content']/div[@class='c-page-content']/div/div/div/div/div[@class='main-col-inner']/div/div[@class='tab-content-wrap']/div/div[position()>0]";
         }
     }
 }
