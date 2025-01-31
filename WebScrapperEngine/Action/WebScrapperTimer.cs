@@ -58,9 +58,8 @@ namespace WebScrapperEngine.Action
             if (CheckForInternetConnection())
             {
                 donghuaScrapper.RunWorker();
-                //animeScrapper.RunWorker();
-                //mangaScrapper.RunWorker();
-                //webtoonScrapper.RunWorker();
+                animeScrapper.RunWorker();
+                mangaScrapper.RunWorker();
 
                 mainWindow.restartButton.Background = (System.Windows.Media.Brush)mainWindow.Resources["RedBrush"];
                 mainWindow.stopButton.Background = (System.Windows.Media.Brush)mainWindow.Resources["LightGreenBrush"];

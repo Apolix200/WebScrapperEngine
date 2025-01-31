@@ -312,7 +312,6 @@
     <Compile Include="Scrapper\AnimeScrapper.cs" />
     <Compile Include="Scrapper\DonghuaScrapper.cs" />
     <Compile Include="Scrapper\MangaScrapper.cs" />
-    <Compile Include="Scrapper\WebtoonScrapper.cs" />
     <Page Include="ConfirmWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

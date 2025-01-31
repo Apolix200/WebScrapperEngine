@@ -346,33 +346,35 @@ namespace WebScrapperEngine.Scrapper
 
         public void SearchImage()
         {
-            HtmlWeb web = new HtmlWeb();
             List<Creation> creations = context.Creations.Where(n => n.CreationType == (int)CreationType.Donghua).ToList();
+            HtmlDocument doc;
+            HtmlNode node;
+            string image;
 
             foreach (var creation in creations)
             {
                 try
                 {
-                    HtmlDocument doc = web.Load(creation.Link);
-
-                    string image = null;
+                    doc = null;
+                    node = null;
+                    image = null;
 
                     switch ((SiteName)creation.SiteName)
                     {
-                        case SiteName.Naruldonghua:
-                            var node = doc.DocumentNode.Descendants(0).FirstOrDefault(n => n.HasClass(Naruldonghua.imageRefreshClass));
-                            if (node != null)
-                            {
-                                var nodeImage = node.SelectSingleNode(Naruldonghua.imageRefreshPath);
-                                image = nodeImage.Attributes[Naruldonghua.imageRefreshSrc]?.Value;
-                            }
-                            break;
+                        //case SiteName.Naruldonghua:
+                        //    doc = web.Load(creation.Link);
+                        //    node = doc.DocumentNode.Descendants(0)?.FirstOrDefault(n => n.HasClass(Naruldonghua.imageRefreshClass));
+                        //    if (node != null)
+                        //    {
+                        //        image = node.SelectSingleNode(Naruldonghua.imageRefreshPath)?.Attributes[Naruldonghua.imageRefreshSrc]?.Value;
+                        //    }
+                        //    break;
                         case SiteName.Animexin:
-                            node = doc.DocumentNode.Descendants(0).FirstOrDefault(n => n.HasClass(Animexin.imageRefreshClass));
+                            doc = web.Load(creation.Link);
+                            node = doc.DocumentNode.Descendants(0)?.FirstOrDefault(n => n.HasClass(Animexin.imageRefreshClass));
                             if (node != null)
                             {
-                                var nodeImage = node.SelectSingleNode(Animexin.imageRefreshPath);
-                                image = nodeImage.Attributes[Animexin.imageRefreshSrc]?.Value;
+                                image = node.SelectSingleNode(Animexin.imageRefreshPath)?.Attributes[Animexin.imageRefreshSrc]?.Value;
                             }
                             break;
                         default:
@@ -508,7 +510,7 @@ namespace WebScrapperEngine.Scrapper
 
             public const string imageRefreshClass = "thumb";
             public const string imageRefreshPath = "img";
-            public const string imageRefreshSrc = "data-src";
+            public const string imageRefreshSrc = "src";
 
         }
     }
