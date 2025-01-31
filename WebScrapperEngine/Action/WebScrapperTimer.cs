@@ -78,7 +78,7 @@ namespace WebScrapperEngine.Action
         public bool RestartIsEnabled ()
         {
             return !timer.IsEnabled && !donghuaScrapper.IsWorkerRunning() && !animeScrapper.IsWorkerRunning() 
-                && !mangaScrapper.IsWorkerRunning() && !webtoonScrapper.IsWorkerRunning();
+                && !mangaScrapper.IsWorkerRunning();
         }
 
         private static bool CheckForInternetConnection()
