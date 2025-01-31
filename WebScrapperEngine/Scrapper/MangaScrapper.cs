@@ -1,6 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿using HtmlAgilityPack;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -13,75 +16,223 @@ namespace WebScrapperEngine.Scrapper
 {
     class MangaScrapper
     {
+        private MainWindow mainWindow;
         private Context context;
 
-        public MangaScrapper()
-        {
+        private BackgroundWorker mangaCreationWorker = new BackgroundWorker();
+        private BackgroundWorker mangaEpisodeWorker = new BackgroundWorker();
 
+        public bool StopWorker { get; set; }
+
+        public MangaScrapper(MainWindow mainWindow)
+        {
+            this.mainWindow = mainWindow;
             context = new Context();
+
+            mangaEpisodeWorker.DoWork += MangaEpisodeWork;
+            mangaEpisodeWorker.RunWorkerCompleted += MangaEpisodeWorkCompleted;
+
+            mangaCreationWorker.DoWork += MangaCreationWork;
+            mangaCreationWorker.RunWorkerCompleted += MangaCreationWorkCompleted;
         }
 
-        public string MakeRequest()
+        public void BookmarkEpisode(Creation creation, Bookmark bookmark)
         {
-            CookieContainer cookieJar = new CookieContainer();
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Mangasee.websiteLink + Mangasee.apiPath);
-            request.CookieContainer = cookieJar;
-            request.Accept = @"text/html, application/xhtml+xml, */*";
-            request.Referer = @"https://mangasee123.com";
-            request.Headers.Add("Accept-Language", "en-GB");
-            request.UserAgent = @"Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)";
-            request.Host = @"mangasee123.com";
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-            string htmlString;
-            using (var reader = new StreamReader(response.GetResponseStream()))
-            {
-                htmlString = reader.ReadToEnd();
+            HtmlWeb web = new HtmlWeb();
+            var doc = web.Load(creation.Link);
+
+            string nodeText = doc.DocumentNode.SelectSingleNode(Mangasee.episodeList).InnerHtml;
+            int firstStringPosition = nodeText.IndexOf("vm.Chapters") + 14;
+            int secondStringPosition = nodeText.IndexOf("vm.NumSubs") - 6;
+
+            string siteJson = nodeText.Substring(firstStringPosition, secondStringPosition - firstStringPosition);
+            var siteResponse = JsonConvert.DeserializeObject<List<EpisodeData>>(siteJson);
+
+            try 
+            { 
+                foreach (var data in siteResponse)
+                {
+                    double timesOf = Math.Floor(Convert.ToDouble(data.Chapter) / 100000);
+                    double episodeNumberFonLinQ = (Convert.ToDouble(data.Chapter) - 100000 * timesOf) / 10;
+
+                    if (!context.Episodes.Any(n => n.Bookmark.Creation.SiteName == creation.SiteName
+                    && n.Bookmark.Creation.Title == creation.Title && n.EpisodeNumber == episodeNumberFonLinQ))
+                    {
+                        context.Episodes.Add(new Episode()
+                        {
+                            BookmarkId = bookmark.BookmarkId,
+                            EpisodeNumber = episodeNumberFonLinQ,
+                            Link = creation.Link.Replace("/manga/", "/read-online/") + "-chapter-" + episodeNumberFonLinQ.ToString(new CultureInfo("en-US")) +
+                            (timesOf > 1 ? "-index-" + timesOf : "") + ".html",
+                            WatchStatus = episodeNumberFonLinQ <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
+                        });
+                    }
+                }
+                context.SaveChanges();
             }
-            return htmlString;
+            catch (Exception e)
+            {
+                mainWindow.Dispatcher.Invoke(() =>
+                {
+                    mainWindow.exceptionListBox.Items.Add("Bookmark of manga failed! Exception: " + e.Message);
+                });
+            }
+        }
+
+        public void SearchEpisode()
+        {
+            List<Bookmark> bookmarks = context.Bookmarks.Where(n => n.Creation.CreationType == (int)CreationType.Manga && n.Completed == 0).ToList();
+
+            foreach (var bookmark in bookmarks)
+            {
+                if (StopWorker) { break; }
+
+                HtmlWeb web = new HtmlWeb();
+                var doc = web.Load(bookmark.Creation.Link);
+
+                string nodeText = doc.DocumentNode.SelectSingleNode(Mangasee.episodeList).InnerHtml;
+                int firstStringPosition = nodeText.IndexOf("vm.Chapters") + 14;
+                int secondStringPosition = nodeText.IndexOf("vm.NumSubs") - 6;
+
+                string siteJson = nodeText.Substring(firstStringPosition, secondStringPosition - firstStringPosition);
+                var siteResponse = JsonConvert.DeserializeObject<List<EpisodeData>>(siteJson);
+
+                try 
+                {
+                    foreach (var data in siteResponse)
+                    {
+                        double timesOf = Math.Floor(Convert.ToDouble(data.Chapter) / 100000);
+                        double episodeNumberFonLinQ = (Convert.ToDouble(data.Chapter) - 100000 * timesOf) / 10;
+
+                        if (!context.Episodes.Any(n => n.Bookmark.Creation.SiteName == bookmark.Creation.SiteName
+                        && n.Bookmark.Creation.Title == bookmark.Creation.Title && n.EpisodeNumber == episodeNumberFonLinQ))
+                        {
+                            context.Episodes.Add(new Episode()
+                            {
+                                BookmarkId = bookmark.BookmarkId,
+                                EpisodeNumber = episodeNumberFonLinQ,
+                                Link = bookmark.Creation.Link.Replace("/manga/", "/read-online/") + "-chapter-" + episodeNumberFonLinQ.ToString(new CultureInfo("en-US")) +
+                                (timesOf > 1 ? "-index-" + timesOf : "") + ".html",
+                                WatchStatus = episodeNumberFonLinQ <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
+                            });
+
+                            context.Bookmarks.FirstOrDefault(n => n.BookmarkId == bookmark.BookmarkId).UpdatedAt = DateTime.Now;
+                        }
+                    }
+                    context.SaveChanges();
+                    mainWindow.CorrectWatchStatus(bookmark);
+                }
+                catch (Exception e)
+                {
+                    mainWindow.Dispatcher.Invoke(() =>
+                    {
+                        mainWindow.exceptionListBox.Items.Add("Episode search of manga failed! Exception: " + e.Message);
+                    });
+                }
+            }
         }
 
         public void SearchMangaseeSite()
         {
-            List<Creation> creations = new List<Creation>();
-            string siteJson = MakeRequest();
-            var siteResponse = JsonConvert.DeserializeObject<List<Data>>(siteJson);
-
-            foreach (var data in siteResponse)
+            try 
             {
-                var mangaCreation = new Creation()
-                {
-                    CreationType = (int)CreationType.Manga,
-                    SiteName = (int)SiteName.Mangasee,
-                    Title = data.S != null ? Regex.Replace(data.S, @"[^0-9a-zA-Z]+", "") : "No name",
-                    Link = data.I != null ? Mangasee.websiteLink + Mangasee.linkPath + data.I : "No link",
-                    Image = Mangasee.imagePath + data.I + ".jpg",
-                    NewStatus = (int)NewStatus.New
-                };
+                string siteJson = mainWindow.MakeRequest(Mangasee.websiteLink + Mangasee.apiPath, Mangasee.cuttenWebsiteLink);
+                var siteResponse = JsonConvert.DeserializeObject<List<Data>>(siteJson);
 
-                if (!context.Creations.Any(n => n.SiteName == mangaCreation.SiteName && n.Title == mangaCreation.Title))
+                foreach (var data in siteResponse)
                 {
-                    creations.Add(mangaCreation);
+                    if (StopWorker) { break; }
+
+                    var mangaCreation = new Creation()
+                    {
+                        CreationType = (int)CreationType.Manga,
+                        SiteName = (int)SiteName.Mangasee,
+                        Title = data.S != null ? Regex.Replace(data.S, @"[^0-9a-zA-Z]+", "") : "No name",
+                        Link = data.I != null ? Mangasee.websiteLink + Mangasee.linkPath + data.I : "No link",
+                        Image = Mangasee.imagePath + data.I + ".jpg",
+                        NewStatus = (int)NewStatus.New,
+                        UpdatedAt = DateTime.Now
+                    };
+
+                    if (!context.Creations.Any(n => n.SiteName == mangaCreation.SiteName && n.Title == mangaCreation.Title))
+                    {
+                        context.Creations.Add(mangaCreation);
+                        context.SaveChanges();
+                    }
                 }
             }
-
-            context.BulkInsert(creations);
+            catch (Exception e)
+            {
+                mainWindow.Dispatcher.Invoke(() =>
+                {
+                    mainWindow.exceptionListBox.Items.Add("Creation search of manga failed! Exception: " + e.Message);
+                });
+            }
         }
+
+        public bool IsWorkerRunning()
+        {
+            return mangaCreationWorker.IsBusy || mangaEpisodeWorker.IsBusy;
+        }
+
+        public void RunWorker()
+        {
+            StopWorker = false;
+
+            mangaEpisodeWorker.RunWorkerAsync();
+
+            mainWindow.mangaEpisodeFilterDotImage.Visibility = Visibility.Visible;
+            mainWindow.mangaCreationFilterDotImage.Visibility = Visibility.Visible;
+        }
+
+        private void MangaEpisodeWork(object sender, DoWorkEventArgs e)
+        {
+            SearchEpisode();
+        }
+
+        private void MangaEpisodeWorkCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            mainWindow.LoadCreationsAndEpisodes();
+
+            mainWindow.mangaEpisodeFilterDotImage.Visibility = Visibility.Hidden;
+
+            mangaCreationWorker.RunWorkerAsync();
+        }
+
+        private void MangaCreationWork(object sender, DoWorkEventArgs e)
+        {
+            SearchMangaseeSite();
+        }
+
+        private void MangaCreationWorkCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            mainWindow.LoadCreationsAndEpisodes();
+
+            mainWindow.mangaCreationFilterDotImage.Visibility = Visibility.Hidden;
+        }
+
         public class Data
         {
             public string I { get; set; }
             public string S { get; set; }
             public List<string> A { get; set; }
         }
+        public class EpisodeData
+        {
+            public string Chapter { get; set; }
+            public string Type { get; set; }
+            public string Date { get; set; }
+            public string ChapterName { get; set; }
+        }
         public static class Mangasee
         {
+            public const string cuttenWebsiteLink = "mangasee123.com";
             public const string websiteLink = "https://mangasee123.com";
             public const string apiPath = "/_search.php";
             public const string linkPath = "/manga/";
-            public const string imagePath = "https://cover.nep.li/cover/";
+            public const string imagePath = "https://temp.compsci88.com/cover/";
 
-            public const string episodeList = "/html/body/div[1]/div/div/div/div/div[2]/a[position()>0]";
-            public const string episodeNumber = "a/span[@class='ng-binding']";
-            public const string episodeLink = "a";
+            public const string episodeList = "/html/body/script[10]/text()";
         }
     }
 }

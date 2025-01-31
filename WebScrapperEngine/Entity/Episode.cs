@@ -13,7 +13,7 @@ namespace WebScrapperEngine.Entity
 
         public int BookmarkId { get; set; }
 
-        public int? EpisodeNumber { get; set; }
+        public double? EpisodeNumber { get; set; }
 
         public string Link { get; set; }
 

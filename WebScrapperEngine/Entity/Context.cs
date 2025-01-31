@@ -15,6 +15,7 @@ namespace WebScrapperEngine.Entity
         public virtual DbSet<Bookmark> Bookmarks { get; set; }
         public virtual DbSet<Creation> Creations { get; set; }
         public virtual DbSet<Episode> Episodes { get; set; }
+        public virtual DbSet<PersonalSetting> PersonalSettings { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

@@ -1,0 +1,193 @@
+﻿<Window x:Class="WebScrapperEngine.ConfirmWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WebScrapperEngine"
+        xmlns:converters="clr-namespace:WebScrapperEngine.Converter"
+        Height="{Binding Source={x:Static SystemParameters.PrimaryScreenHeight}, Converter={converters:WindowSizeRatioConverter}, ConverterParameter='0.2' }" 
+        Width="{Binding Source={x:Static SystemParameters.PrimaryScreenWidth}, Converter={converters:WindowSizeRatioConverter}, ConverterParameter='0.25' }" 
+        Background="#333743" ResizeMode="NoResize"
+        x:Name="ConfirmAction"
+        WindowStartupLocation="CenterScreen"
+        Loaded="ConfirmAction_Loaded">
+    
+    <Window.Resources>
+
+        <converters:CreationTypeConverter x:Key="CreationType"/>
+        <converters:SiteNameTypeConverter x:Key="SiteName"/>
+        <converters:NewStatusConverter x:Key="NewStatus"/>
+        <converters:WatchStatusConverter x:Key="WatchStatus"/>
+
+        <SolidColorBrush x:Key="DarkBrush" Color="#111E2F" />
+        <SolidColorBrush x:Key="DarkPressedBrush" Color="#294870" />
+        <SolidColorBrush x:Key="HighlightBrush" Color="#7a9fce" />
+        <SolidColorBrush x:Key="LightBrush" Color="#4169e1" />
+        <SolidColorBrush x:Key="DatagridBackgroundBrush" Color="#2e313c" />
+        <SolidColorBrush x:Key="ForeGroundBrush" Color="#F0F0F0" />
+        <SolidColorBrush x:Key="RedBrush" Color="#bb696c" />
+        <SolidColorBrush x:Key="OrangeBrush" Color="#dd8341"/>
+        <SolidColorBrush x:Key="LightGreenBrush" Color="#6CA589"/>
+
+        <Style TargetType="{x:Type WrapPanel}" x:Key="SideMenuFilter">
+            <Setter Property="Background" Value="{StaticResource DarkBrush}"/>
+        </Style>
+
+        <Style TargetType="{x:Type Button}" x:Key="FilterButton">
+            <Setter Property="FontSize" Value="30"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Background" Value="{StaticResource DarkBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource ForeGroundBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Resources>
+                <Style TargetType="Label">
+                    <Setter Property="Foreground" Value="#F0F0F0"/>
+                </Style>
+            </Style.Resources>
+        </Style>
+
+        <Style TargetType="{x:Type Button}" x:Key="ActionButton">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Background" Value="{StaticResource LightBrush}"/>
+            <Setter Property="Foreground" Value="#F0F0F0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="5"/>
+                </Style>
+            </Style.Resources>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="{x:Type TextBox}" x:Key="SearchTextBoxSytle">
+            <Setter Property="Background" Value="#333743"/>
+            <Setter Property="Foreground" Value="{StaticResource ForeGroundBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style TargetType="{x:Type ListBox}" x:Key="ExceptionListBoxStyle">
+            <Setter Property="Background" Value="#333743"/>
+            <Setter Property="Foreground" Value="{StaticResource ForeGroundBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style TargetType="{x:Type DataGrid}">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Background" Value="{StaticResource DatagridBackgroundBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Style.Resources>
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#294870"/>
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Transparent"/>
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#F0F0F0" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#F0F0F0" />
+            </Style.Resources>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridColumnHeader}">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Padding" Value="10,0,0,0"/>
+            <Setter Property="Background" Value="{StaticResource DarkBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource ForeGroundBrush}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridCell}">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="TextBlock.TextAlignment" Value="Center"/>
+            <Style.Resources>
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                </Style>
+            </Style.Resources>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridRow}" x:Key="CreationDataGridStyle">
+            <Setter Property="Foreground" Value="#F0F0F0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding NewStatus, Converter={StaticResource NewStatus}}" Value="Seen" >
+                    <Setter Property="Background" Value="{StaticResource RedBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NewStatus, Converter={StaticResource NewStatus}}" Value="New" >
+                    <Setter Property="Background" Value="#6CA589" />
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridRow}" x:Key="EpisodeDataGridStyle">
+            <Setter Property="Foreground" Value="{StaticResource ForeGroundBrush}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding WatchStatus, Converter={StaticResource WatchStatus}}" Value="NextWatch" >
+                    <Setter Property="Background" Value="{StaticResource LightGreenBrush}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding WatchStatus, Converter={StaticResource WatchStatus}}" Value="LatestWatch" >
+                    <Setter Property="Background" Value="{StaticResource OrangeBrush}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding WatchStatus, Converter={StaticResource WatchStatus}}" Value="NeedToWatch" >
+                    <Setter Property="Background" Value="#4D7E66" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding WatchStatus, Converter={StaticResource WatchStatus}}" Value="AlreadyWatch" >
+                    <Setter Property="Background" Value="{StaticResource RedBrush}"/>
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridRow}" x:Key="BookmarkDataGridStyle" >
+            <Setter Property="Foreground" Value="{StaticResource ForeGroundBrush}"/>
+            <Setter Property="Background" Value="{StaticResource LightGreenBrush}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+
+    </Window.Resources>
+
+    <Grid>
+
+        <TextBox Style="{StaticResource SearchTextBoxSytle}" x:Name="confirmLabelTextBox" 
+                 Height="40" Width="455" Margin="10,25,0,0" FontSize="30" 
+                 HorizontalAlignment="Left"  VerticalAlignment="Top"  
+                 Text="Are you sure?" TextAlignment="Center"
+                 IsReadOnly="true"/>
+
+        <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Center"  VerticalAlignment="Bottom"
+                    Margin="-150,0,0,50" Height="40" Width="120" 
+                    Content="Accept" Background="{StaticResource LightGreenBrush}"
+                    Click="accept_Click"/>
+
+        <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Center"  VerticalAlignment="Bottom"
+                    Margin="150,0,0,50" Height="40" Width="120" 
+                    Content="Refuse" Background="{StaticResource RedBrush}"
+                    Click="refuse_Click"/>
+
+    </Grid>
+</Window>

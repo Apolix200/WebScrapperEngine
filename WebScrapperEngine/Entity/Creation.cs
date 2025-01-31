@@ -29,6 +29,8 @@ namespace WebScrapperEngine.Entity
 
         public int NewStatus { get; set; }
 
+        public DateTime UpdatedAt { get; set; }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Bookmark> Bookmark { get; set; }
     }
