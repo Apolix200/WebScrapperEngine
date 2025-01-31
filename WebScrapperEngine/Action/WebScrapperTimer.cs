@@ -19,7 +19,6 @@ namespace WebScrapperEngine.Action
         private DonghuaScrapper donghuaScrapper;
         private AnimeScrapper animeScrapper;
         private MangaScrapper mangaScrapper;
-        private WebtoonScrapper webtoonScrapper;
 
         public WebScrapperTimer(MainWindow mainWindow)
         {
@@ -28,8 +27,6 @@ namespace WebScrapperEngine.Action
             donghuaScrapper = new DonghuaScrapper(mainWindow);
             animeScrapper = new AnimeScrapper(mainWindow);
             mangaScrapper = new MangaScrapper(mainWindow);
-            webtoonScrapper = new WebtoonScrapper(mainWindow);
-
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromSeconds(1);
             timer.Tick += WebScrapperTimer_Tick;
