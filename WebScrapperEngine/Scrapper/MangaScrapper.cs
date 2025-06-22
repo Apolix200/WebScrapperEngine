@@ -90,15 +90,16 @@ namespace WebScrapperEngine.Scrapper
                 HtmlWeb web = new HtmlWeb();
                 var doc = web.Load(bookmark.Creation.Link);
 
-                string nodeText = doc.DocumentNode.SelectSingleNode(Mangasee.episodeList).InnerHtml;
-                int firstStringPosition = nodeText.IndexOf("vm.Chapters") + 14;
-                int secondStringPosition = nodeText.IndexOf("vm.NumSubs") - 6;
-
-                string siteJson = nodeText.Substring(firstStringPosition, secondStringPosition - firstStringPosition);
-                var siteResponse = JsonConvert.DeserializeObject<List<EpisodeData>>(siteJson);
-
-                try 
+                try
                 {
+                    string nodeText = doc.DocumentNode.SelectSingleNode(Mangasee.episodeList).InnerHtml;
+                    int firstStringPosition = nodeText.IndexOf("vm.Chapters") + 14;
+                    int secondStringPosition = nodeText.IndexOf("vm.NumSubs") - 6;
+
+                    string siteJson = nodeText.Substring(firstStringPosition, secondStringPosition - firstStringPosition);
+                    var siteResponse = JsonConvert.DeserializeObject<List<EpisodeData>>(siteJson);
+
+
                     foreach (var data in siteResponse)
                     {
                         double timesOf = Math.Floor(Convert.ToDouble(data.Chapter) / 100000);

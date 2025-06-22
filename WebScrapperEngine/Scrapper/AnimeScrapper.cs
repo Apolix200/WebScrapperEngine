@@ -358,8 +358,8 @@ namespace WebScrapperEngine.Scrapper
 
         public static class Kickassanime
         {
-            public const string cuttenWebsiteLink = "kickassanime.am";
-            public const string websiteLink = "https://kickassanime.am";
+            public const string cuttenWebsiteLink = "kaa.mx";
+            public const string websiteLink = "https://kaa.mx";
             public const string apiPath = "/api/anime?page=";
             public const string imagePath = "/image/poster/";
             public const string apiEpisodeLink = "/api/show/";
