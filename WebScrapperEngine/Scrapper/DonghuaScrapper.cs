@@ -481,7 +481,7 @@ namespace WebScrapperEngine.Scrapper
             public const string linkPath = "div/a";
             public const string linkToSeriesPath = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[2]/div/div[1]/div[2]/span[2]/a";
             public const string imagePath = "div/a/div[@class='limit']/img";
-            public const string imageSrc = "data-src";
+            public const string imageSrc = "src";
 
             public const string episodeList = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[@class='bixbox bxcl epcheck']/div[@class='eplister']/ul/li[position()>0]";
             public const string episodeNumber = "a/div[@class='epl-num']";
@@ -489,7 +489,7 @@ namespace WebScrapperEngine.Scrapper
 
             public const string imageRefreshClass = "thumb";
             public const string imageRefreshPath = "img";
-            public const string imageRefreshSrc = "data-src";
+            public const string imageRefreshSrc = "src";
         }
 
         public static class Animexin

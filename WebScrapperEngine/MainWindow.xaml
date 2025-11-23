@@ -6,8 +6,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WebScrapperEngine"
         xmlns:converters="clr-namespace:WebScrapperEngine.Converter"
-        Height="{Binding Source={x:Static SystemParameters.PrimaryScreenHeight}, Converter={converters:WindowSizeRatioConverter}, ConverterParameter='0.9' }" 
-        Width="{Binding Source={x:Static SystemParameters.PrimaryScreenWidth}, Converter={converters:WindowSizeRatioConverter}, ConverterParameter='0.9' }" 
+        Height="1080"
+        Width="1920"
         Title="WebSearchEngine" Background="#333743" ResizeMode="CanMinimize"
         x:Name="WebSearchEngine"
         WindowStartupLocation="CenterScreen"
@@ -266,7 +266,7 @@
                VerticalAlignment="Top" HorizontalAlignment="Left" Margin="120,470,0,0" />
 
         <Button Style="{StaticResource FilterButton}"  x:Name="creationsFilterButton" Content="Creations" Height="50" Width="250" 
-            HorizontalAlignment="Center" VerticalAlignment="Top" Margin="-250,30,0,0"
+            HorizontalAlignment="Left" VerticalAlignment="Top" Margin="902,30,0,0"
             Click="LoadDatasourceCreations_Click" MouseEnter="DatasourceFilterButton_MouseEnter" MouseLeave="DatasourceFilterButton_MouseLeave">
             <Button.Resources>
                 <Style TargetType="Border">
@@ -276,7 +276,7 @@
         </Button>
 
         <Button Style="{StaticResource FilterButton}" x:Name="episodesFilterButton" Content="Episodes" Height="50" Width="250" 
-                HorizontalAlignment="Center" VerticalAlignment="Top" Margin="250,30,0,0"
+                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1152,30,0,0"
                 Click="LoadDatasourceEpisodes_Click" MouseEnter="DatasourceFilterButton_MouseEnter" MouseLeave="DatasourceFilterButton_MouseLeave">
             <Button.Resources>
                 <Style TargetType="Border">
@@ -341,7 +341,7 @@
 
         <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
                 ToolTip="Delete bookmark"
-                Margin="1235,120,0,0" Height="40" Width="40" Background="{StaticResource RedBrush}"
+                Margin="1140,120,0,0" Height="40" Width="40" Background="{StaticResource RedBrush}"
                 FontSize="25"
                 Click="deleteBookmark_Click">
             <Image Width="30" Height="30" Source="/Image/trash.png"></Image>
@@ -349,7 +349,7 @@
 
         <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
                 ToolTip="Link it with an another site"
-                Margin="1290,120,0,0" Height="40" Width="40" 
+                Margin="1195,120,0,0" Height="40" Width="40" 
                 FontSize="25"
                 Click="linkBookmark_Click">
             <Image Width="30" Height="30" Source="/Image/link.png"></Image>
@@ -357,7 +357,7 @@
 
         <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
                 ToolTip="Set it to complete"
-                Margin="1345,120,0,0" Height="40" Width="40" 
+                Margin="1250,120,0,0" Height="40" Width="40" 
                 FontSize="25"
                 Click="completeBookmark_Click">
             <Image Width="30" Height="30" Source="/Image/complete.png"></Image>
@@ -365,7 +365,7 @@
 
         <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
                 ToolTip="Copy to clipboard"
-                Margin="1645,120,0,0" Height="40" Width="40"  
+                Margin="1550,120,0,0" Height="40" Width="40"  
                 FontSize="25"
                 Click="copyBookmark_Click">
             <Image Width="30" Height="30" Source="/Image/load.png"></Image>
@@ -398,7 +398,7 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <DataGrid RowStyle="{StaticResource EpisodeDataGridStyle}" x:Name="episodesDataGrid" Height="760" Width="940"
+        <DataGrid RowStyle="{StaticResource EpisodeDataGridStyle}" x:Name="episodesDataGrid" Height="853" Width="940"
                   HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="155,0,0,10"
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended"
                   GridLinesVisibility="None" HeadersVisibility="Column" 
@@ -418,8 +418,8 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <DataGrid RowStyle="{StaticResource BookmarkDataGridStyle}" x:Name="bookmarksDataGrid" Height="760" Width="450"
-                  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="1235,0,0,10"
+        <DataGrid RowStyle="{StaticResource BookmarkDataGridStyle}" x:Name="bookmarksDataGrid" Height="853" Width="450"
+                  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="1140,0,0,10"
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended"
                   GridLinesVisibility="None" HeadersVisibility="Column" 
                   CanUserSortColumns = "False" CanUserResizeColumns="False"  
@@ -441,8 +441,8 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <ListBox Style="{StaticResource ExceptionListBoxStyle}" x:Name="exceptionListBox" HorizontalAlignment="Left" VerticalAlignment="Top"
-                 Height="100" Width="450" Margin="1235,10,0,0"/>
+        <ListBox Style="{StaticResource ExceptionListBoxStyle}" x:Name="exceptionListBox" HorizontalAlignment="Right" VerticalAlignment="Top"
+                 Height="380" Width="318" Margin="0,10,0,0"/>
 
     </Grid>
 </Window>

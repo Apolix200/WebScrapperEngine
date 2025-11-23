@@ -8,73 +8,64 @@ namespace WebScrapperEngine.Action
 {
     public class StringSimilarity
     {
-        public static double compareStrings(String str1, String str2) 
+        public static double CompareStrings(string str1, string str2)
         {
-            List<String> pairs1 = wordLetterPairs(str1.ToUpper());
-            List<String> pairs2 = wordLetterPairs(str2.ToUpper());
+            if (string.IsNullOrWhiteSpace(str1) || string.IsNullOrWhiteSpace(str2))
+                return 0.0;
+
+            var pairs1 = WordLetterPairs(str1.ToUpper());
+            var pairs2 = WordLetterPairs(str2.ToUpper());
+
+            if (pairs1.Count == 0 || pairs2.Count == 0)
+                return 0.0;
+
+            // Build frequency map for pairs2
+            var freq2 = new Dictionary<string, int>();
+            foreach (var p in pairs2)
+            {
+                if (freq2.ContainsKey(p))
+                    freq2[p]++;
+                else
+                    freq2[p] = 1;
+            }
 
             int intersection = 0;
-            int union = pairs1.Count + pairs2.Count;
 
-            for (int i = 0; i < pairs1.Count; i++)
+            // Count intersections using the dictionary
+            foreach (var p1 in pairs1)
             {
-                var pair1 = pairs1.ElementAt(i);
-
-                for (int j = 0; j < pairs2.Count; j++)
+                if (freq2.TryGetValue(p1, out int count) && count > 0)
                 {
-                    var pair2 = pairs2.ElementAt(j);
-
-                    if (pair1.Equals(pair2))
-                    {
-                        intersection++;
-                        pairs2.RemoveAt(j);
-                        break;
-                    }
+                    intersection++;
+                    freq2[p1] = count - 1;
                 }
             }
 
+            int union = pairs1.Count + pairs2.Count;
             return Math.Round(2.0 * intersection / union, 5);
         }
-        private static List<String> wordLetterPairs(String str) 
+
+        private static List<string> WordLetterPairs(string str)
         {
-            List<String> allPairs = new List<String>();
+            var pairs = new List<string>();
+            var words = str.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
 
-            // Tokenize the string and put the tokens/words into an array
-
-            String[] words = str.Split(' ');
-
-            // For each word
-
-            for (int w = 0; w < words.Length; w++)
+            foreach (var word in words)
             {
-
-                // Find the pairs of characters
-
-                String[] pairsInWord = letterPairs(words[w]);
-
-                for (int p = 0; p < pairsInWord.Length; p++)
-                {
-
-                    allPairs.Add(pairsInWord[p]);
-
-                }
-
-            }
-
-            return allPairs;
-        }
-        private static String[] letterPairs(String str)
-        {
-            int numPairs = str.Length - 1;
-
-            String[] pairs = new String[numPairs];
-
-            for (int i = 0; i < numPairs; i++)
-            {
-                pairs[i] = str.Substring(i, 2);
+                var lp = LetterPairs(word);
+                pairs.AddRange(lp);
             }
 
             return pairs;
+        }
+
+        private static IEnumerable<string> LetterPairs(string str)
+        {
+            if (str.Length < 2)
+                yield break;
+
+            for (int i = 0; i < str.Length - 1; i++)
+                yield return str.Substring(i, 2);
         }
     }
 }

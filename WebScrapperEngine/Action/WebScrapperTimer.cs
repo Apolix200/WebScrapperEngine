@@ -56,7 +56,7 @@ namespace WebScrapperEngine.Action
             {
                 donghuaScrapper.RunWorker();
                 animeScrapper.RunWorker();
-                mangaScrapper.RunWorker();
+                //mangaScrapper.RunWorker();
 
                 mainWindow.restartButton.Background = (System.Windows.Media.Brush)mainWindow.Resources["RedBrush"];
                 mainWindow.stopButton.Background = (System.Windows.Media.Brush)mainWindow.Resources["LightGreenBrush"];

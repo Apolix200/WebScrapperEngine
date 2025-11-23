@@ -52,7 +52,7 @@ namespace WebScrapperEngine
             creation.CreationType == (int)bookmark.Creation.CreationType
             && creation.SiteName != (int)bookmark.Creation.SiteName).ToList())
             {
-                if (StringSimilarity.compareStrings(creation.Title, bookmark.Creation.Title) >= 0.5)
+                if (StringSimilarity.CompareStrings(creation.Title, bookmark.Creation.Title) >= 0.5 || bookmark.ConnectedId == creation.CreationId)
                 {
                     recommendCreations.Add(creation);
                 }
@@ -88,7 +88,7 @@ namespace WebScrapperEngine
             if (filterText != "")
             {
                 filteredCretions = allCreations.Where(creation =>
-                StringSimilarity.compareStrings(creation.Title.ToLower(), filterText) >= 0.8).ToList();
+                StringSimilarity.CompareStrings(creation.Title.ToLower(), filterText) >= 0.8).ToList();
             }
 
             if(filteredCretions.Count <= 0)
