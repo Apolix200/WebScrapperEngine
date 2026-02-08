@@ -1,19 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using WebScrapperEngine.Action;
 using WebScrapperEngine.Entity;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace WebScrapperEngine
 {
@@ -28,10 +21,10 @@ namespace WebScrapperEngine
         private Bookmark selectedBookmark;
         private Creation selectedCreation;
 
-        private List<Creation> allCreations;
-        private List<Creation> recommendCreations;
-
-        public int? ConnectedId { get; set; }
+        public ObservableCollection<Creation> AllCreations { get; set;  }
+            = new ObservableCollection<Creation>();
+        public ObservableCollection<Creation> RecommendCreations { get; set; }
+            = new ObservableCollection<Creation>();
 
         public LinkWindow(Bookmark bookmark, MainWindow mainWindow)
         {
@@ -40,44 +33,85 @@ namespace WebScrapperEngine
             DataContext = this;
 
             selectedBookmark = bookmark;
-            ConnectedId = bookmark.ConnectedId;
-
-            allCreations = context.Creations.Where(creation =>
-            creation.CreationType == (int)bookmark.Creation.CreationType
-            && creation.SiteName != (int)bookmark.Creation.SiteName).ToList();
-
-            recommendCreations = new List<Creation>();
-
-            foreach (Creation creation in context.Creations.Where(creation =>
-            creation.CreationType == (int)bookmark.Creation.CreationType
-            && creation.SiteName != (int)bookmark.Creation.SiteName).ToList())
-            {
-                if (StringSimilarity.CompareStrings(creation.Title, bookmark.Creation.Title) >= 0.5 || bookmark.ConnectedId == creation.CreationId)
-                {
-                    recommendCreations.Add(creation);
-                }
-            }
 
             InitializeComponent();
         }
 
         private void LinkBookmark_Loaded(object sender, RoutedEventArgs e)
         {
-            allCreationsDataGrid.ItemsSource = allCreations;
-            recommendCreationsDataGrid.ItemsSource = recommendCreations;
+            var currentBookmark = context.Bookmarks.Include("BookmarkCreations").FirstOrDefault(b => b.BookmarkId == selectedBookmark.BookmarkId);
+
+            AllCreations = new ObservableCollection<Creation>(context.Creations.Where(creation =>
+                creation.CreationType == (int)currentBookmark.Creation.CreationType
+                && creation.SiteName != (int)currentBookmark.Creation.SiteName).ToList());
+
+            RecommendCreations = new ObservableCollection<Creation>();
+            foreach (Creation creation in context.Creations.Where(creation =>
+                 creation.CreationType == (int)currentBookmark.Creation.CreationType
+                 && creation.SiteName != (int)currentBookmark.Creation.SiteName).ToList())
+            {
+                if (StringSimilarity.CompareStrings(creation.Title, currentBookmark.Creation.Title) >= 0.5
+                    || currentBookmark.BookmarkCreations.Any(bc => bc.CreationId == creation.CreationId))
+                {
+                    RecommendCreations.Add(creation);
+                }
+            }
+
+            allCreationsDataGrid.ItemsSource = AllCreations;
+            recommendCreationsDataGrid.ItemsSource = RecommendCreations;
         }
 
         private void confirmLink_Click(object sender, RoutedEventArgs e)
         {
-            if (selectedCreation != null)
+            if (selectedCreation != null && selectedBookmark != null)
             {
-                context.Bookmarks.Where(bookmark => bookmark.BookmarkId == selectedBookmark.BookmarkId).FirstOrDefault().ConnectedId =
-                selectedCreation.CreationId;
-            }
-            context.SaveChanges();
+                var bookmark = context.Bookmarks.Where(b => b.BookmarkId == selectedBookmark.BookmarkId).FirstOrDefault();
 
-            mainWindow.bookmarksDataGrid.Items.Refresh();
-            this.Close();
+                if(!bookmark.BookmarkCreations.Any(a => a.CreationId == selectedCreation.CreationId))
+                {
+                    bookmark.BookmarkCreations.Add(new BookmarkCreation
+                    {
+                        BookmarkId = bookmark.BookmarkId,
+                        CreationId = selectedCreation.CreationId
+                    });
+                    if (!RecommendCreations.Any(c => c.CreationId == selectedCreation.CreationId))
+                    {
+                        RecommendCreations.Add(selectedCreation);
+                    }
+                }
+
+                context.SaveChanges();
+                this.recommendCreationsDataGrid.Items.Refresh();
+                mainWindow.bookmarksDataGrid.Items.Refresh();
+            }
+        }
+
+        private void confirmUnlink_Click(object sender, RoutedEventArgs e)
+        {
+            if (selectedCreation != null && selectedBookmark != null)
+            {
+                var bookmark = context.Bookmarks.Where(b => b.BookmarkId == selectedBookmark.BookmarkId).FirstOrDefault();
+
+                if (bookmark != null)
+                {
+                    var linkToRemove = bookmark.BookmarkCreations
+                        .FirstOrDefault(bc => bc.CreationId == selectedCreation.CreationId);
+
+                    if (linkToRemove != null)
+                    {
+                        bookmark.BookmarkCreations.Remove(linkToRemove);
+                        if (StringSimilarity.CompareStrings(selectedCreation.Title, selectedBookmark.Creation.Title) < 0.5)
+                        {
+                            RecommendCreations.Remove(selectedCreation);
+                        }
+                       
+                    }
+                }
+
+                context.SaveChanges();
+                this.recommendCreationsDataGrid.Items.Refresh();
+                mainWindow.bookmarksDataGrid.Items.Refresh();
+            }
         }
 
         private void searchFiltered_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
@@ -87,13 +121,13 @@ namespace WebScrapperEngine
             List<Creation> filteredCretions = new List<Creation>();
             if (filterText != "")
             {
-                filteredCretions = allCreations.Where(creation =>
+                filteredCretions = AllCreations.Where(creation =>
                 StringSimilarity.CompareStrings(creation.Title.ToLower(), filterText) >= 0.8).ToList();
             }
 
             if(filteredCretions.Count <= 0)
             {
-                filteredCretions = allCreations.Where(creation => creation.Title.ToLower().Contains(filterText)).ToList();
+                filteredCretions = AllCreations.Where(creation => creation.Title.ToLower().Contains(filterText)).ToList();
             }
 
 
@@ -118,6 +152,11 @@ namespace WebScrapperEngine
                 selectedCreation = (Creation)dataGrid.SelectedItems[0];
             }
             allCreationsDataGrid.UnselectAll();
+        }
+
+        private void close_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
     }
 }

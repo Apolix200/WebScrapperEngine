@@ -1,20 +1,12 @@
 ﻿using HtmlAgilityPack;
 using Newtonsoft.Json;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using WebScrapperEngine.Entity;
-using static WebScrapperEngine.Scrapper.DonghuaScrapper;
-
 namespace WebScrapperEngine.Scrapper
 {
     class AnimeScrapper
@@ -165,18 +157,17 @@ namespace WebScrapperEngine.Scrapper
             string siteJson = "";
             int index = 1;
 
-            do
+            try
             {
+                do {
+
                 if (StopWorker) { break; }
 
-                try 
-                {
                     siteJson = mainWindow.MakeRequest(Kickassanime.websiteLink + Kickassanime.apiPath + index, Kickassanime.cuttenWebsiteLink);
                     siteResponse = JsonConvert.DeserializeObject<SiteResponse>(siteJson);
 
                     foreach (var data in siteResponse.Result)
                     {
-
                         var animeCreation = new Creation()
                         {
                             CreationType = (int)CreationType.Anime,
@@ -194,18 +185,18 @@ namespace WebScrapperEngine.Scrapper
                             context.SaveChanges();
                         }
                     }
-                }
-                catch (Exception e)
+
+                    index++;
+
+                } while (siteResponse.Result.Count() > 0);
+            }
+            catch (Exception e)
+            {
+                mainWindow.Dispatcher.Invoke(() =>
                 {
-                    mainWindow.Dispatcher.Invoke(() =>
-                    {
-                        mainWindow.exceptionListBox.Items.Add("Creation search of anime failed! Exception: " + e.Message);
-                    });
-                }
-
-                index++;
-
-            } while (siteResponse.Result.Count() > 0);
+                    mainWindow.exceptionListBox.Items.Add("Creation search of anime failed! Exception: " + e.Message);
+                });
+            }
         }
 
         public void SearchImage()
@@ -358,8 +349,8 @@ namespace WebScrapperEngine.Scrapper
 
         public static class Kickassanime
         {
-            public const string cuttenWebsiteLink = "kaa.mx";
-            public const string websiteLink = "https://kaa.mx";
+            public const string cuttenWebsiteLink = "kaa.lt";
+            public const string websiteLink = "https://kaa.lt";
             public const string apiPath = "/api/anime?page=";
             public const string imagePath = "/image/poster/";
             public const string apiEpisodeLink = "/api/show/";

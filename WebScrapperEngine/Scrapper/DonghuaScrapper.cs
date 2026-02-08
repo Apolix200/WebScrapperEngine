@@ -1,16 +1,10 @@
 ﻿using HtmlAgilityPack;
-using Microsoft.ClearScript.JavaScript;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Net;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Threading;
 using WebScrapperEngine.Entity;
 
 namespace WebScrapperEngine.Scrapper
@@ -118,49 +112,49 @@ namespace WebScrapperEngine.Scrapper
         public void SearchEpisode()
         {
             List<Bookmark> bookmarks = context.Bookmarks.Where(n => n.Creation.CreationType == (int)CreationType.Donghua && n.Completed == 0).ToList();
-            HtmlNodeCollection nodes;
-            HtmlNodeCollection nodes2;
 
             foreach (var bookmark in bookmarks)
             {
                 if (StopWorker) { break; }
-                var doc = web.Load(bookmark.Creation.Link);
-                var doc2 = bookmark.ConnectedId != null ? web.Load(context.Creations.FirstOrDefault(creation => creation.CreationId == bookmark.ConnectedId).Link) : null;
+                try {
 
-                nodes = null;
-                nodes2 = null;
+                    var creations = bookmark.BookmarkCreations.Select(bc => bc.Creation)
+                        .Concat(new[] { bookmark.Creation }).Where(c => c != null).Distinct().ToList();
+                    var episodeNodeLists = new List<HtmlNodeCollection>();
 
-                string episodeNumber;
-                string episodeLink;
-
-                switch ((SiteName)bookmark.Creation.SiteName)
-                {
-                    case SiteName.Naruldonghua:
-                        nodes = doc.DocumentNode.SelectNodes(Naruldonghua.episodeList);
-                        nodes2 = bookmark.ConnectedId != null ? doc2.DocumentNode.SelectNodes(Animexin.episodeList) : null;
-                        break;
-                    case SiteName.Animexin:
-                        nodes = doc.DocumentNode.SelectNodes(Animexin.episodeList);
-                        nodes2 = bookmark.ConnectedId != null ? doc2.DocumentNode.SelectNodes(Naruldonghua.episodeList) : null;
-                        break;
-                    default:
-                        break;
-                }
-
-                try
-                {
-                    if (nodes != null)
+                    foreach (var creation in creations)
                     {
-                        if (nodes2 != null && nodes2.Count > nodes.Count)
+                        var doc = web.Load(creation.Link);
+                        HtmlNodeCollection nodes = null;
+
+                        switch ((SiteName)creation.SiteName)
                         {
-                            nodes = nodes2;
+                            case SiteName.Naruldonghua:
+                                nodes = doc.DocumentNode.SelectNodes(Naruldonghua.episodeList);
+                                break;
+
+                            case SiteName.Animexin:
+                                nodes = doc.DocumentNode.SelectNodes(Animexin.episodeList);
+                                break;
                         }
 
-                        foreach (var node in nodes)
+                        if (nodes != null)
                         {
-                            episodeNumber = null;
-                            episodeLink = null;
+                            episodeNodeLists.Add(nodes);
+                        }                       
+                    }
 
+                    var nodesToProcess = episodeNodeLists
+                        .OrderByDescending(n => n.Count)
+                        .FirstOrDefault();
+
+                    foreach (var node in nodesToProcess)
+                    {
+                        string episodeNumber = null;
+                        string episodeLink = null;
+
+                        foreach (var creation in creations)
+                        {
                             switch ((SiteName)bookmark.Creation.SiteName)
                             {
                                 case SiteName.Naruldonghua:
@@ -175,7 +169,7 @@ namespace WebScrapperEngine.Scrapper
                                     break;
                             }
                             if (Double.TryParse(episodeNumber, out double episodeNumberFonLinQ))
-                            {                           
+                            {
                                 if (!context.Episodes.Any(n => n.Bookmark.Creation.SiteName == bookmark.Creation.SiteName
                                 && n.Bookmark.Creation.Title == bookmark.Creation.Title && n.EpisodeNumber == episodeNumberFonLinQ))
                                 {
@@ -191,9 +185,10 @@ namespace WebScrapperEngine.Scrapper
                                 }
                             }
                         }
-                        context.SaveChanges();
-                        mainWindow.CorrectWatchStatus(bookmark);
                     }
+
+                    context.SaveChanges();
+                    mainWindow.CorrectWatchStatus(bookmark);
                 }
                 catch (Exception e)
                 {

@@ -1,10 +1,7 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace WebScrapperEngine.Entity
 {
-    using System;
-    using System.Collections.Generic;
-    using System.ComponentModel.DataAnnotations;
-    using System.ComponentModel.DataAnnotations.Schema;
-    using System.Data.Entity.Spatial;
 
     [Table("Episode")]
     public partial class Episode

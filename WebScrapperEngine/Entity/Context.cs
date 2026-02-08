@@ -1,7 +1,4 @@
-using System;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
-using System.Linq;
 
 namespace WebScrapperEngine.Entity
 {
@@ -14,6 +11,7 @@ namespace WebScrapperEngine.Entity
 
         public virtual DbSet<Bookmark> Bookmarks { get; set; }
         public virtual DbSet<Creation> Creations { get; set; }
+        public virtual DbSet<BookmarkCreation> BookmarkCreations { get; set; }
         public virtual DbSet<Episode> Episodes { get; set; }
         public virtual DbSet<PersonalSetting> PersonalSettings { get; set; }
 
@@ -28,6 +26,21 @@ namespace WebScrapperEngine.Entity
                 .HasMany(e => e.Bookmark)
                 .WithRequired(e => e.Creation)
                 .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<BookmarkCreation>()
+                .HasKey(bc => new { bc.BookmarkId, bc.CreationId });
+
+            modelBuilder.Entity<BookmarkCreation>()
+                .HasRequired(bc => bc.Bookmark)
+                .WithMany(b => b.BookmarkCreations)
+                .HasForeignKey(bc => bc.BookmarkId)
+                .WillCascadeOnDelete(true);
+
+            modelBuilder.Entity<BookmarkCreation>()
+                .HasRequired(bc => bc.Creation)
+                .WithMany(c => c.BookmarkCreations)
+                .HasForeignKey(bc => bc.CreationId)
+                .WillCascadeOnDelete(true);
         }
     }
 }

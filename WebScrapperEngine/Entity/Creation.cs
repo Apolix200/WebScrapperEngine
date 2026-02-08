@@ -1,18 +1,17 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace WebScrapperEngine.Entity
-{
-    using System;
-    using System.Collections.Generic;
-    using System.ComponentModel.DataAnnotations;
-    using System.ComponentModel.DataAnnotations.Schema;
-    using System.Data.Entity.Spatial;
+{   
 
     [Table("Creation")]
     public partial class Creation
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
         public Creation()
         {
             Bookmark = new HashSet<Bookmark>();
+            BookmarkCreations = new HashSet<BookmarkCreation>();
         }
 
         public int CreationId { get; set; }
@@ -31,7 +30,8 @@ namespace WebScrapperEngine.Entity
 
         public DateTime UpdatedAt { get; set; }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Bookmark> Bookmark { get; set; }
+
+        public virtual ICollection<BookmarkCreation> BookmarkCreations { get; set; }
     }
 }

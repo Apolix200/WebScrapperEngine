@@ -302,6 +302,7 @@
     <Compile Include="Converter\WatchStatusConverter.cs" />
     <Compile Include="Converter\WindowSizeRatioConverter.cs" />
     <Compile Include="Entity\Bookmark.cs" />
+    <Compile Include="Entity\BookmarkCreation.cs" />
     <Compile Include="Entity\Context.cs" />
     <Compile Include="Entity\Creation.cs" />
     <Compile Include="Entity\Episode.cs" />
@@ -410,6 +411,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Image\greenLoadingDot.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Image\close.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

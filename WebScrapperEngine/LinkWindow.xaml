@@ -127,24 +127,29 @@
         <Style TargetType="{x:Type DataGridRow}" x:Key="CreationDataGridStyle">
             <Setter Property="Foreground" Value="#F0F0F0"/>
             <Style.Triggers>
+                <!-- Linked Creations -->
                 <DataTrigger Value="False">
                     <DataTrigger.Binding>
                         <MultiBinding Converter="{StaticResource LinkedCreation}">
                             <Binding Path="CreationId"/>
-                            <Binding ElementName="LinkBookmark" Path="ConnectedId"/>
+                            <Binding Path="BookmarkCreations"/>
                         </MultiBinding>
                     </DataTrigger.Binding>
                     <Setter Property="Background" Value="{StaticResource LightGreenBrush}" />
                 </DataTrigger>
-                <DataTrigger Value="True" >
+
+                <!-- Not linked -->
+                <DataTrigger Value="True">
                     <DataTrigger.Binding>
                         <MultiBinding Converter="{StaticResource LinkedCreation}">
                             <Binding Path="CreationId"/>
-                            <Binding ElementName="LinkBookmark" Path="ConnectedId"/>
+                            <Binding  Path="BookmarkCreations"/>
                         </MultiBinding>
                     </DataTrigger.Binding>
                     <Setter Property="Background" Value="{StaticResource OrangeBrush}" />
                 </DataTrigger>
+
+                <!-- Hover -->
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
                 </Trigger>
@@ -163,8 +168,8 @@
         <Image Height="40" Width="40" 
                 HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="720,0,0,705" Source="/Image/search.png" />
 
-        <DataGrid RowStyle="{StaticResource CreationDataGridStyle}" x:Name="allCreationsDataGrid" 
-                  HorizontalAlignment="Left" VerticalAlignment="Bottom" 
+        <DataGrid RowStyle="{StaticResource CreationDataGridStyle}" ItemsSource="{Binding AllCreations}"
+                  x:Name="allCreationsDataGrid" HorizontalAlignment="Left" VerticalAlignment="Bottom" 
                   Margin="10,0,0,60" Height="640" Width="750"
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" 
                   GridLinesVisibility="None" HeadersVisibility="Column" 
@@ -184,8 +189,8 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <DataGrid RowStyle="{StaticResource CreationDataGridStyle}" x:Name="recommendCreationsDataGrid" 
-                  HorizontalAlignment="Left" VerticalAlignment="Bottom" 
+        <DataGrid RowStyle="{StaticResource CreationDataGridStyle}" ItemsSource="{Binding RecommendCreations}"
+                  x:Name="recommendCreationsDataGrid" HorizontalAlignment="Left" VerticalAlignment="Bottom" 
                   Margin="770,0,0,60" Height="685" Width="740"
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" 
                   GridLinesVisibility="None" HeadersVisibility="Column" 
@@ -205,10 +210,30 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Center"  VerticalAlignment="Bottom"
-                    Margin="120,0,120,10" Height="40" Width="120" 
-                    Content="Link"
-                    Click="confirmLink_Click">
+        <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+            Margin="0,0,150,10" Height="40" Width="120" 
+            Content="Unlink"
+            Click="confirmUnlink_Click"/>
+
+        <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+            Margin="150,0,0,10" Height="40" Width="120" 
+            Content="Link"
+            Click="confirmLink_Click" RenderTransformOrigin="0.475,1.188"/>
+
+        <Label x:Name="AllCreationLabel" HorizontalAlignment="Left" VerticalAlignment="Top" 
+               Content="All: "
+               Margin="10,300,0,0"  Height="68" Width="400" 
+               FontSize="48" FontWeight="Bold" Foreground="White"/>
+
+        <Label x:Name="RecommendedCreationLabel" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Content="Recommended: "
+               Margin="760,300,0,0" Height="68" Width="400" 
+               FontSize="48" FontWeight="Bold" Foreground="White"/>
+
+        <Button Style="{StaticResource ActionButton}" HorizontalAlignment="Left"  VerticalAlignment="Top"
+             Margin="1920,10,0,0" Height="100" Width="100" Background="{StaticResource RedBrush}"
+             Click="close_Click">
+            <Image Width="80" Height="80" Source="/Image/close.png"></Image>
         </Button>
 
     </Grid>
