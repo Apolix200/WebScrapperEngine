@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
@@ -29,9 +30,12 @@ namespace WebScrapperEngine
         private Filter filter;
         private DatasourceFilter datasourceFilter;
 
-        private List<Creation> creations = new List<Creation>();
-        private List<Bookmark> bookmarks = new List<Bookmark>();
-        private List<Episode> episodes = new List<Episode>();
+        public ObservableCollection<Creation> Creations { get; set; }
+            = new ObservableCollection<Creation>();
+        public ObservableCollection<Bookmark> Bookmarks { get; set; }
+            = new ObservableCollection<Bookmark>();
+        public ObservableCollection<Episode> Episodes { get; set; }
+            = new ObservableCollection<Episode>();
 
         private string filterText;
         private Creation lastSelected;
@@ -91,45 +95,59 @@ namespace WebScrapperEngine
         #region GridLoadFilters        
         public void LoadCreationsAndEpisodes()
         {
-            creations = new List<Creation>();
-            bookmarks = new List<Bookmark>();
-            episodes = new List<Episode>();
+            Creations.Clear();
+            Bookmarks.Clear();
+            Episodes.Clear();
+
+            List<Creation> creations = new List<Creation>();
+            List<Bookmark> bookmarks = new List<Bookmark>();
+            List<Episode> episodes = new List<Episode>();
 
             switch (filter)
             {
                 case Filter.All:
                     creations = context.Creations.ToList();
-                    bookmarks = context.Bookmarks.ToList();
+                    bookmarks = context.Bookmarks.Include("BookmarkCreations").ToList();
                     episodes = context.Episodes.Where(e => e.Bookmark.Completed == 0).ToList();
                     context.PersonalSettings.First().Filter = (int)Filter.All;
                     break;
                 case Filter.Donghua:
                     creations = context.Creations.Where(c => c.CreationType == (int)CreationType.Donghua).ToList();
-                    bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Donghua).ToList();
+                    bookmarks = context.Bookmarks.Include("BookmarkCreations").Where(b => b.Creation.CreationType == (int)CreationType.Donghua).ToList();
                     episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Donghua && e.Bookmark.Completed == 0).ToList();
                     context.PersonalSettings.First().Filter = (int)Filter.Donghua;
                     break;
                 case Filter.Anime:
                     creations = context.Creations.Where(c => c.CreationType == (int)CreationType.Anime).ToList();
-                    bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Anime).ToList();
+                    bookmarks = context.Bookmarks.Include("BookmarkCreations").Where(b => b.Creation.CreationType == (int)CreationType.Anime).ToList();
                     episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Anime && e.Bookmark.Completed == 0).ToList();
                     context.PersonalSettings.First().Filter = (int)Filter.Anime;
                     break;
                 case Filter.Manga:
                     creations = context.Creations.Where(c => c.CreationType == (int)CreationType.Manga).ToList();
-                    bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Manga).ToList();
+                    bookmarks = context.Bookmarks.Include("BookmarkCreations").Where(b => b.Creation.CreationType == (int)CreationType.Manga).ToList();
                     episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Manga && e.Bookmark.Completed == 0).ToList();
                     context.PersonalSettings.First().Filter = (int)Filter.Manga;
                     break;
                 case Filter.Webtoon:
                     creations = context.Creations.Where(c => c.CreationType == (int)CreationType.Webtoon).ToList();
-                    bookmarks = context.Bookmarks.Where(b => b.Creation.CreationType == (int)CreationType.Webtoon).ToList();
+                    bookmarks = context.Bookmarks.Include("BookmarkCreations").Where(b => b.Creation.CreationType == (int)CreationType.Webtoon).ToList();
                     episodes = context.Episodes.Where(e => e.Bookmark.Creation.CreationType == (int)CreationType.Webtoon && e.Bookmark.Completed == 0).ToList();
                     context.PersonalSettings.First().Filter = (int)Filter.Webtoon;
                     break;
                 default:
                     break;
             }
+
+            foreach (var creation in creations) {
+                Creations.Add(creation);
+            }              
+            foreach (var bookmark in bookmarks) {
+                Bookmarks.Add(bookmark);
+            }            
+            foreach (var episode in episodes) {
+                Episodes.Add(episode);
+            }      
 
             switch (datasourceFilter)
             {
@@ -147,10 +165,14 @@ namespace WebScrapperEngine
                     break;
             }
 
-            creationsDataGrid.ItemsSource = creations.Where(creation => creation.Title.ToLower().Contains(filterText)).OrderBy(o => o.NewStatus).ThenByDescending(t => t.UpdatedAt);
-            bookmarksDataGrid.ItemsSource = bookmarks.OrderBy(o => o.Completed).ThenByDescending(t => t.UpdatedAt);
-            episodesDataGrid.ItemsSource = episodes.Where(episode => episode.Bookmark.Creation.Title.ToLower().Contains(filterText)).OrderBy(o => o.WatchStatus).ThenBy(t => t.Bookmark.Creation.Title).ThenByDescending(t => t.EpisodeNumber);
+            creationsDataGrid.ItemsSource = Creations.Where(creation => creation.Title.ToLower().Contains(filterText)).OrderBy(o => o.NewStatus).ThenByDescending(t => t.UpdatedAt);
+            bookmarksDataGrid.ItemsSource = Bookmarks.OrderBy(o => o.Completed).ThenByDescending(t => t.UpdatedAt);
+            episodesDataGrid.ItemsSource = Episodes.Where(episode => episode.Bookmark.Creation.Title.ToLower().Contains(filterText)).OrderBy(o => o.WatchStatus).ThenBy(t => t.Bookmark.Creation.Title).ThenByDescending(t => t.EpisodeNumber);
             context.SaveChanges();
+
+            creationsDataGrid.Items.Refresh();
+            bookmarksDataGrid.Items.Refresh();
+            episodesDataGrid.Items.Refresh();
 
             CancelDropdownList();
             FilterButtonFocus();
@@ -378,7 +400,6 @@ namespace WebScrapperEngine
                     }
                     context.SaveChanges();
                 }
-                //creationsDataGrid.Items.Refresh();
                 LoadCreationsAndEpisodes();
             }
 
@@ -406,7 +427,6 @@ namespace WebScrapperEngine
                         CorrectWatchStatus(episode.Bookmark);
                     }
                 }
-                //episodesDataGrid.Items.Refresh();
                 LoadCreationsAndEpisodes();
             }
             CancelDropdownList();

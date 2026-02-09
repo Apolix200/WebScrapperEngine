@@ -71,7 +71,9 @@ namespace WebScrapperEngine.Action
 
         public bool RestartIsEnabled ()
         {
-            return !timer.IsEnabled && !donghuaScrapper.IsWorkerRunning() && !animeScrapper.IsWorkerRunning() 
+            return !timer.IsEnabled 
+                && !donghuaScrapper.IsWorkerRunning() 
+                && !animeScrapper.IsWorkerRunning() 
                 && !mangaScrapper.IsWorkerRunning();
         }
 

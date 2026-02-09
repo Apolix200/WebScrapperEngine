@@ -20,7 +20,7 @@
         <converters:SiteNameTypeConverter x:Key="SiteName"/>
         <converters:NewStatusConverter x:Key="NewStatus"/>
         <converters:WatchStatusConverter x:Key="WatchStatus"/>
-        <converters:ConnectedIdConverter x:Key="ConnectedId"/>
+        <converters:LinkedCheckMarkConverter x:Key="LinkedCheckMark"/>
 
         <SolidColorBrush x:Key="DarkBrush" Color="#111E2F" />
         <SolidColorBrush x:Key="DarkPressedBrush" Color="#294870" />
@@ -183,6 +183,103 @@
             <Setter Property = "VerticalOffset" Value="10"/>
             <Setter Property = "FontSize" Value="24"/>
             <Setter Property = "FontWeight" Value="Bold"/>
+        </Style>
+
+        <Style x:Key="LinkedCheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid Width="26" Height="26">
+                            <Border x:Name="Border"
+                                CornerRadius="6"
+                                BorderThickness="2"/>
+
+                            <Path x:Name="CheckMark"
+                                Visibility="Collapsed"
+                                Data="M4 14 L10 20 L22 6"
+                                StrokeThickness="3"
+                                StrokeStartLineCap="Round"
+                                StrokeEndLineCap="Round"
+                                StrokeLineJoin="Round"/>
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <!-- Checked + Normal -->
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource LightGreenBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource LightGreenBrush}"/>
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="CheckMark" Property="Stroke" Value="{StaticResource ForeGroundBrush}"/>
+                            </Trigger>
+
+                            <!-- Unchecked + Normal -->
+                            <Trigger Property="IsChecked" Value="False">
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource ForeGroundBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource DarkGreenBrush}"/>
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Collapsed"/>
+                            </Trigger>
+
+                            <!-- Checked + Commpleted -->
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding Completed}" Value="1" />
+                                    <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource DarkGreenBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource DarkGreenBrush}"/>
+                            </MultiDataTrigger>
+
+                            <!-- Checked + Selected -->
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True"/>
+                                    <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource DarkPressedBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource DarkPressedBrush}"/>
+                            </MultiDataTrigger>
+
+                            <!-- Unchecked + Selected -->
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True"/>
+                                    <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="False"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource ForeGroundBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource DarkPressedBrush}"/>
+                                <Setter TargetName="Border" Property="BorderThickness" Value="5"/>
+                            </MultiDataTrigger>
+
+                            <!-- Checked + Hover -->
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True" />
+                                    <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource HighlightBrush}"/>
+                            </MultiDataTrigger>
+
+                            <!-- Checked + Hover + Selected -->
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True"/>
+                                    <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True" />
+                                    <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource DarkPressedBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource DarkPressedBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource DarkPressedBrush}"/>
+                            </MultiDataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
     </Window.Resources>
@@ -377,7 +474,8 @@
             <Image Width="30" Height="30" Source="/Image/trash.png"></Image>
         </Button>-->
 
-        <DataGrid RowStyle="{StaticResource CreationDataGridStyle}" x:Name="creationsDataGrid" Height="760" Width="940"
+        <DataGrid RowStyle="{StaticResource CreationDataGridStyle}" ItemsSource="{Binding Creations}"
+                  x:Name="creationsDataGrid" Height="855" Width="940"
                   HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="155,0,0,10"
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended"
                   GridLinesVisibility="None" HeadersVisibility="Column"
@@ -398,7 +496,8 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <DataGrid RowStyle="{StaticResource EpisodeDataGridStyle}" x:Name="episodesDataGrid" Height="853" Width="940"
+        <DataGrid RowStyle="{StaticResource EpisodeDataGridStyle}" ItemsSource="{Binding Episodes}"
+                  x:Name="episodesDataGrid" Height="855" Width="940"
                   HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="155,0,0,10"
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended"
                   GridLinesVisibility="None" HeadersVisibility="Column" 
@@ -418,7 +517,8 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <DataGrid RowStyle="{StaticResource BookmarkDataGridStyle}" x:Name="bookmarksDataGrid" Height="853" Width="450"
+        <DataGrid RowStyle="{StaticResource BookmarkDataGridStyle}" ItemsSource="{Binding Bookmarks}"
+                  x:Name="bookmarksDataGrid" Height="855" Width="450"
                   HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="1140,0,0,10"
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended"
                   GridLinesVisibility="None" HeadersVisibility="Column" 
@@ -429,8 +529,12 @@
                 <DataGridTextColumn Header="Type" Width="0.25*" Binding="{Binding Creation.CreationType,
                     Converter={StaticResource CreationType}}"/>
                 <DataGridTextColumn Header="Title" Width="*" Binding="{Binding Creation.Title}"/>
-                <DataGridCheckBoxColumn Header="Linked" Width="0.25*" Binding="{Binding ConnectedId,
-                    Converter={StaticResource ConnectedId}}" />
+                <DataGridCheckBoxColumn Header="Linked" Width="0.25*" Binding="{Binding BookmarkCreations,
+                    Converter={StaticResource LinkedCheckMark}}">
+                    <DataGridCheckBoxColumn.ElementStyle>
+                        <Style TargetType="CheckBox" BasedOn="{StaticResource LinkedCheckBoxStyle}"/>
+                    </DataGridCheckBoxColumn.ElementStyle>
+                </DataGridCheckBoxColumn>
                 <DataGridTemplateColumn Header="Image" Width="0.25*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -441,7 +545,8 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <ListBox Style="{StaticResource ExceptionListBoxStyle}" x:Name="exceptionListBox" HorizontalAlignment="Right" VerticalAlignment="Top"
+        <ListBox Style="{StaticResource ExceptionListBoxStyle}" x:Name="exceptionListBox" 
+                 HorizontalAlignment="Right" VerticalAlignment="Top"
                  Height="380" Width="318" Margin="0,10,0,0"/>
 
     </Grid>

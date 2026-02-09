@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using WebScrapperEngine.Entity;
+using static WebScrapperEngine.Scrapper.AnimeScrapper;
 
 namespace WebScrapperEngine.Scrapper
 {
@@ -153,36 +154,33 @@ namespace WebScrapperEngine.Scrapper
                         string episodeNumber = null;
                         string episodeLink = null;
 
-                        foreach (var creation in creations)
+                        switch ((SiteName)bookmark.Creation.SiteName)
                         {
-                            switch ((SiteName)bookmark.Creation.SiteName)
+                            case SiteName.Naruldonghua:
+                                episodeNumber = node.SelectSingleNode(Naruldonghua.episodeNumber) != null ? Regex.Replace(node.SelectSingleNode(Naruldonghua.episodeNumber).InnerText, @"[^0-9a-zA-Z]+", " ").Split(' ')[0] : null;
+                                episodeLink = node.SelectSingleNode(Naruldonghua.episodeLink)?.GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Naruldonghua.episodeLink).GetAttributeValue<string>("href", null) : null;
+                                break;
+                            case SiteName.Animexin:
+                                episodeNumber = node.SelectSingleNode(Animexin.episodeNumber) != null ? Regex.Replace(node.SelectSingleNode(Animexin.episodeNumber).InnerText, @"[^0-9a-zA-Z]+", " ").Split(' ')[0] : null;
+                                episodeLink = node.SelectSingleNode(Animexin.episodeLink)?.GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Animexin.episodeLink).GetAttributeValue<string>("href", null) : null;
+                                break;
+                            default:
+                                break;
+                        }
+                        if (Double.TryParse(episodeNumber, out double episodeNumberFonLinQ))
+                        {
+                            if (!context.Episodes.Any(n => n.Bookmark.Creation.SiteName == bookmark.Creation.SiteName
+                            && n.Bookmark.Creation.Title == bookmark.Creation.Title && n.EpisodeNumber == episodeNumberFonLinQ))
                             {
-                                case SiteName.Naruldonghua:
-                                    episodeNumber = node.SelectSingleNode(Naruldonghua.episodeNumber) != null ? Regex.Replace(node.SelectSingleNode(Naruldonghua.episodeNumber).InnerText, @"[^0-9a-zA-Z]+", " ").Split(' ')[0] : null;
-                                    episodeLink = node.SelectSingleNode(Naruldonghua.episodeLink)?.GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Naruldonghua.episodeLink).GetAttributeValue<string>("href", null) : null;
-                                    break;
-                                case SiteName.Animexin:
-                                    episodeNumber = node.SelectSingleNode(Animexin.episodeNumber) != null ? Regex.Replace(node.SelectSingleNode(Animexin.episodeNumber).InnerText, @"[^0-9a-zA-Z]+", " ").Split(' ')[0] : null;
-                                    episodeLink = node.SelectSingleNode(Animexin.episodeLink)?.GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Animexin.episodeLink).GetAttributeValue<string>("href", null) : null;
-                                    break;
-                                default:
-                                    break;
-                            }
-                            if (Double.TryParse(episodeNumber, out double episodeNumberFonLinQ))
-                            {
-                                if (!context.Episodes.Any(n => n.Bookmark.Creation.SiteName == bookmark.Creation.SiteName
-                                && n.Bookmark.Creation.Title == bookmark.Creation.Title && n.EpisodeNumber == episodeNumberFonLinQ))
+                                context.Episodes.Add(new Episode()
                                 {
-                                    context.Episodes.Add(new Episode()
-                                    {
-                                        BookmarkId = bookmark.BookmarkId,
-                                        EpisodeNumber = episodeNumberFonLinQ,
-                                        Link = episodeLink,
-                                        WatchStatus = episodeNumberFonLinQ <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
-                                    });
+                                    BookmarkId = bookmark.BookmarkId,
+                                    EpisodeNumber = episodeNumberFonLinQ,
+                                    Link = episodeLink,
+                                    WatchStatus = episodeNumberFonLinQ <= 1 ? (int)WatchStatus.NextWatch : (int)WatchStatus.NeedToWatch
+                                });
 
-                                    context.Bookmarks.FirstOrDefault(n => n.BookmarkId == bookmark.BookmarkId).UpdatedAt = DateTime.Now;
-                                }
+                                context.Bookmarks.FirstOrDefault(n => n.BookmarkId == bookmark.BookmarkId).UpdatedAt = DateTime.Now;
                             }
                         }
                     }
@@ -356,14 +354,14 @@ namespace WebScrapperEngine.Scrapper
 
                     switch ((SiteName)creation.SiteName)
                     {
-                        //case SiteName.Naruldonghua:
-                        //    doc = web.Load(creation.Link);
-                        //    node = doc.DocumentNode.Descendants(0)?.FirstOrDefault(n => n.HasClass(Naruldonghua.imageRefreshClass));
-                        //    if (node != null)
-                        //    {
-                        //        image = node.SelectSingleNode(Naruldonghua.imageRefreshPath)?.Attributes[Naruldonghua.imageRefreshSrc]?.Value;
-                        //    }
-                        //    break;
+                        case SiteName.Naruldonghua:
+                            doc = web.Load(creation.Link);
+                            node = doc.DocumentNode.Descendants(0)?.FirstOrDefault(n => n.HasClass(Naruldonghua.imageRefreshClass));
+                            if (node != null)
+                            {
+                                image = node.SelectSingleNode(Naruldonghua.imageRefreshPath)?.Attributes[Naruldonghua.imageRefreshSrc]?.Value;
+                            }
+                            break;
                         case SiteName.Animexin:
                             doc = web.Load(creation.Link);
                             node = doc.DocumentNode.Descendants(0)?.FirstOrDefault(n => n.HasClass(Animexin.imageRefreshClass));
@@ -401,6 +399,8 @@ namespace WebScrapperEngine.Scrapper
         public void RunWorker()
         {
             StopWorker = false;
+
+            // ReplaceDatabaseLinks();
 
             donghuaEpisodeWorker.RunWorkerAsync();
 
@@ -466,6 +466,57 @@ namespace WebScrapperEngine.Scrapper
             refreshImageNeeded = false;
         }
 
+        private void ReplaceDatabaseLinks()
+        {
+            try
+            {
+                var creations = context.Creations
+                    .Where(c => c.SiteName == (int)SiteName.Naruldonghua || c.SiteName == (int)SiteName.Animexin).ToList();
+
+                foreach (var creation in creations)
+                {
+                    string correctBaseUrl = null;
+
+                    switch ((SiteName)creation.SiteName)
+                    {
+                        case SiteName.Naruldonghua:
+                            correctBaseUrl = Naruldonghua.websiteLink;
+                            break;
+
+                        case SiteName.Animexin:
+                            correctBaseUrl = Animexin.websiteLink;
+                            break;
+                    }
+
+                    if (!creation.Link.StartsWith(correctBaseUrl, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (Uri.TryCreate(creation.Link, UriKind.Absolute, out var oldUri))
+                        {
+                            creation.Link = correctBaseUrl + oldUri.AbsolutePath;
+                        }
+                    }
+                    if (!string.IsNullOrEmpty(creation.Image) &&
+                        !creation.Image.StartsWith("data:image", StringComparison.OrdinalIgnoreCase) &&
+                        !creation.Image.StartsWith(correctBaseUrl, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (Uri.TryCreate(creation.Image, UriKind.Absolute, out var oldImageUri))
+                        {
+                            creation.Image = correctBaseUrl + oldImageUri.AbsolutePath;
+                        }
+                    }
+                }
+
+                //context.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                mainWindow.Dispatcher.Invoke(() =>
+                {
+                    mainWindow.exceptionListBox.Items.Add(
+                        "ReplaceDatabaseLinks (Donghua) failed! Exception: " + e.Message);
+                });
+            }
+        }
 
         public static class Naruldonghua
         {

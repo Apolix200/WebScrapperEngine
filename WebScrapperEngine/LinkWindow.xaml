@@ -174,7 +174,8 @@
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" 
                   GridLinesVisibility="None" HeadersVisibility="Column" 
                   CanUserSortColumns = "False" CanUserResizeColumns="False"
-                  SelectionChanged="selectAllCreation_SelectionChanged">
+                  SelectionChanged="selectAllCreation_SelectionChanged"
+                  MouseDoubleClick="selectAllCreation_MouseDoubleClick">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Site" Width="0.2*" Binding="{Binding SiteName, 
                         Converter={StaticResource SiteName}}"/>
@@ -195,7 +196,8 @@
                   AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" 
                   GridLinesVisibility="None" HeadersVisibility="Column" 
                   CanUserSortColumns = "False" CanUserResizeColumns="False"
-                  SelectionChanged="selectRecommendCreation_SelectionChanged">
+                  SelectionChanged="selectRecommendCreation_SelectionChanged"
+                  MouseDoubleClick="selectRecommendCreation_MouseDoubleClick">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Site" Width="0.2*" Binding="{Binding SiteName, 
                         Converter={StaticResource SiteName}}"/>

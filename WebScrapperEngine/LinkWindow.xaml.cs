@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using WebScrapperEngine.Action;
 using WebScrapperEngine.Entity;
 using static System.Net.Mime.MediaTypeNames;
@@ -158,5 +160,43 @@ namespace WebScrapperEngine
         {
             this.Close();
         }
+
+        private void selectAllCreation_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender != null)
+            {
+                DataGrid dataGrid = sender as DataGrid;
+                if (dataGrid != null && dataGrid.SelectedItems != null)
+                {
+                    foreach (Creation creation in dataGrid.SelectedItems)
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = creation.Link,
+                            UseShellExecute = true
+                        });
+                    }
+                }
+            }
+        }
+        private void selectRecommendCreation_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender != null)
+            {
+                DataGrid dataGrid = sender as DataGrid;
+                if (dataGrid != null && dataGrid.SelectedItems != null)
+                {
+                    foreach (Creation creation in dataGrid.SelectedItems)
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = creation.Link,
+                            UseShellExecute = true
+                        });
+                    }
+                }
+            }
+        }
+
     }
 }

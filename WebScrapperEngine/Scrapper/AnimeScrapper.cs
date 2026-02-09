@@ -239,6 +239,8 @@ namespace WebScrapperEngine.Scrapper
         {
             StopWorker = false;
 
+            ReplaceDatabaseLinks();
+
             animeEpisodeWorker.RunWorkerAsync();
 
             mainWindow.animeEpisodeFilterDotImage.Visibility = Visibility.Visible;
@@ -301,6 +303,42 @@ namespace WebScrapperEngine.Scrapper
 
             mainWindow.animeImageFilterDotImage.Visibility = Visibility.Hidden;
             refreshImageNeeded = false;
+        }
+
+        private void ReplaceDatabaseLinks()
+        {
+            try
+            {
+                var creations = context.Creations
+                    .Where(c => c.SiteName == (int)SiteName.Kickassanime).ToList();
+
+                foreach (var creation in creations)
+                {
+                    if (!creation.Link.StartsWith(Kickassanime.websiteLink, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var uri = new Uri(creation.Link);
+                        string slug = uri.AbsolutePath.TrimStart('/');
+
+                        creation.Link = $"{Kickassanime.websiteLink}/{slug}";
+
+                        if (!string.IsNullOrEmpty(creation.Image) && !creation.Image.StartsWith("data:image") &&
+                            !creation.Image.StartsWith(Kickassanime.websiteLink, StringComparison.OrdinalIgnoreCase))
+                        {
+                            var imgFileName = creation.Image.Split('/').Last();
+                            creation.Image = $"{Kickassanime.websiteLink}{Kickassanime.imagePath}{imgFileName}";
+                        }
+                    }
+                }
+
+                context.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                mainWindow.Dispatcher.Invoke(() =>
+                {
+                    mainWindow.exceptionListBox.Items.Add("ReplaceDatabaseLinks failed! Exception: " + e.Message);
+                });
+            }
         }
 
         public class SiteResponse

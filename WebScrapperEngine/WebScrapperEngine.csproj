@@ -294,7 +294,7 @@
     <Compile Include="ConfirmWindow.xaml.cs">
       <DependentUpon>ConfirmWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Converter\ConnectedIdConverter.cs" />
+    <Compile Include="Converter\LinkedCheckMarkConverter.cs" />
     <Compile Include="Converter\CreationTypeConverter.cs" />
     <Compile Include="Converter\LinkedCreationConverter.cs" />
     <Compile Include="Converter\NewStatusConverter.cs" />
