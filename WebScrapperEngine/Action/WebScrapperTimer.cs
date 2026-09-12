@@ -92,5 +92,14 @@ namespace WebScrapperEngine.Action
                 return false;
             }
         }
+
+        public void StopAndShutdown()
+        {
+            timer.Stop();
+
+            donghuaScrapper.StopWorker = true;
+            animeScrapper.StopWorker = true;
+            mangaScrapper.StopWorker = true;
+        }
     }
 }

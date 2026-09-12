@@ -12,7 +12,8 @@
         x:Name="WebSearchEngine"
         WindowStartupLocation="CenterScreen"
         Loaded="WebScrapper_Loaded"
-        KeyDown="WebScrapperWindow_KeyDown">
+        KeyDown="WebScrapperWindow_KeyDown"
+        Closing="WebScrapper_Closing">
 
     <Window.Resources>
 

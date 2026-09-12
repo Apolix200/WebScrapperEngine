@@ -56,18 +56,15 @@ namespace WebScrapperEngine.Action
                     mainWindow.exceptionListBox.Items.Add("Bookmark creation failed! Exception: " + e.GetType().Name);
                 }
 
-                switch ((SiteName)creation.SiteName)
+                switch ((CreationType)creation.CreationType)
                 {
-                    case SiteName.Naruldonghua:
+                    case CreationType.Donghua:
                         donghuaScrapper.BookmarkEpisode(creation, bookmark);
                         break;
-                    case SiteName.Animexin:
-                        donghuaScrapper.BookmarkEpisode(creation, bookmark);
-                        break;
-                    case SiteName.Kickassanime:
+                    case CreationType.Anime:
                         animeScrapper.BookmarkEpisode(creation, bookmark);
                         break;
-                    case SiteName.Mangasee:
+                    case CreationType.Manga:
                         mangaScrapper.BookmarkEpisode(creation, bookmark);
                         break;
                     default:

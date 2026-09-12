@@ -13,8 +13,8 @@ namespace WebScrapperEngine.Scrapper
     class DonghuaScrapper
     {
         private MainWindow mainWindow;
-        private HtmlWeb web;
         private Context context;
+        private HtmlWeb web;
 
         private BackgroundWorker donghuaCreationWorker = new BackgroundWorker();
         private BackgroundWorker donghuaEpisodeWorker = new BackgroundWorker();
@@ -27,8 +27,8 @@ namespace WebScrapperEngine.Scrapper
         public DonghuaScrapper(MainWindow mainWindow)
         {
             this.mainWindow = mainWindow;
-            web = new HtmlWeb();
             context = new Context();
+            web = new HtmlWeb();
 
             donghuaEpisodeWorker.DoWork += DonghuaEpisodeWork;
             donghuaEpisodeWorker.RunWorkerCompleted += DonghuaEpisodeWorkCompleted;
@@ -359,7 +359,9 @@ namespace WebScrapperEngine.Scrapper
                             node = doc.DocumentNode.Descendants(0)?.FirstOrDefault(n => n.HasClass(Naruldonghua.imageRefreshClass));
                             if (node != null)
                             {
-                                image = node.SelectSingleNode(Naruldonghua.imageRefreshPath)?.Attributes[Naruldonghua.imageRefreshSrc]?.Value;
+                                var imageNode = node.SelectSingleNode(Naruldonghua.imageRefreshPath);
+
+                                image = imageNode?.Attributes[Naruldonghua.imageSrc]?.Value ?? imageNode.Attributes[Naruldonghua.imageFallbackSrc]?.Value;
                             }
                             break;
                         case SiteName.Animexin:
@@ -367,7 +369,9 @@ namespace WebScrapperEngine.Scrapper
                             node = doc.DocumentNode.Descendants(0)?.FirstOrDefault(n => n.HasClass(Animexin.imageRefreshClass));
                             if (node != null)
                             {
-                                image = node.SelectSingleNode(Animexin.imageRefreshPath)?.Attributes[Animexin.imageRefreshSrc]?.Value;
+                                var imageNode = node.SelectSingleNode(Naruldonghua.imageRefreshPath);
+
+                                image = imageNode?.Attributes[Naruldonghua.imageSrc]?.Value ?? imageNode.Attributes[Naruldonghua.imageFallbackSrc]?.Value;
                             }
                             break;
                         default:
@@ -527,7 +531,8 @@ namespace WebScrapperEngine.Scrapper
             public const string linkPath = "div/a";
             public const string linkToSeriesPath = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[2]/div/div[1]/div[2]/span[2]/a";
             public const string imagePath = "div/a/div[@class='limit']/img";
-            public const string imageSrc = "src";
+            public const string imageSrc = "data-src";
+            public const string imageFallbackSrc = "src";
 
             public const string episodeList = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[@class='bixbox bxcl epcheck']/div[@class='eplister']/ul/li[position()>0]";
             public const string episodeNumber = "a/div[@class='epl-num']";
@@ -535,12 +540,11 @@ namespace WebScrapperEngine.Scrapper
 
             public const string imageRefreshClass = "thumb";
             public const string imageRefreshPath = "img";
-            public const string imageRefreshSrc = "src";
         }
 
         public static class Animexin
         {
-            public const string websiteLink = "https://animexin.net";
+            public const string websiteLink = "https://animexin.dev";
             public const string contentPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[2]/div[@class='listupd normal']/div[@class='excstf']/article[position()>0]";
             public const string contentErrorPath = "/html/body/div[@id='content']/div/div[@class='notf']";
             public const string nextButtonPath = "/html/body/div[@id='content']/div/div[@class='postbody']/div[2]/div[@class='listupd normal']/div[@class='hpage']/a[@class='r']";
@@ -548,7 +552,8 @@ namespace WebScrapperEngine.Scrapper
             public const string linkPath = "div/a";
             public const string linkToSeriesPath = "/html/body/div[@id='content']/div/div[4]/article/div[2]/div/div[1]/div[2]/span[2]/a";
             public const string imagePath = "div/a/div[@class='limit']/img";
-            public const string imageSrc = "src";
+            public const string imageSrc = "data-src";
+            public const string imageFallbackSrc = "src";
 
             public const string episodeList = "/html/body/div[@id='content']/div/div[@class='postbody']/article/div[@class='bixbox bxcl epcheck']/div[@class='eplister']/ul/li[position()>0]";
             public const string episodeNumber = "a/div[@class='epl-num']";
@@ -556,7 +561,6 @@ namespace WebScrapperEngine.Scrapper
 
             public const string imageRefreshClass = "thumb";
             public const string imageRefreshPath = "img";
-            public const string imageRefreshSrc = "src";
 
         }
     }

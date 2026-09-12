@@ -771,7 +771,14 @@ namespace WebScrapperEngine
 
             context.SaveChanges();
         }
+
+        private void WebScrapper_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            webScrapperTimer.StopAndShutdown();
+            context?.Dispose();
+        }
     }
+
     public enum Filter
     {
         All,
@@ -808,8 +815,8 @@ namespace WebScrapperEngine
         Naruldonghua,
         Animexin,
         Kickassanime,
+        Aniwave,
         Mangasee,
-        Webtoonxyz
     }
 
     public enum WatchStatus

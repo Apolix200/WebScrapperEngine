@@ -29,5 +29,13 @@ namespace WebScrapperEngine
 
             base.OnStartup(e);
         }
+
+        private void Application_Exit(object sender, ExitEventArgs e)
+        {
+            if (Current.MainWindow is MainWindow mainWindow)
+            {
+                mainWindow.Close();
+            }
+        }
     }
 }
