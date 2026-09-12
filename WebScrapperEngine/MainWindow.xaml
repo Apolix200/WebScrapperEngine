@@ -527,8 +527,8 @@
                   SelectionChanged="bookmarksDataGrid_SelectionChanged"
                   MouseDoubleClick="bookmarksDataGrid_MouseDoubleClick">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Type" Width="0.25*" Binding="{Binding Creation.CreationType,
-                    Converter={StaticResource CreationType}}"/>
+                <DataGridTextColumn Header="Site" Width="0.25*" Binding="{Binding Creation.SiteName,
+                    Converter={StaticResource SiteName}}"/>
                 <DataGridTextColumn Header="Title" Width="*" Binding="{Binding Creation.Title}"/>
                 <DataGridCheckBoxColumn Header="Linked" Width="0.25*" Binding="{Binding BookmarkCreations,
                     Converter={StaticResource LinkedCheckMark}}">

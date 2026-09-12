@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using WebScrapperEngine.Entity;
 using static WebScrapperEngine.Scrapper.AnimeScrapper;
+using static WebScrapperEngine.Scrapper.DonghuaScrapper;
 
 namespace WebScrapperEngine.Scrapper
 {
@@ -221,9 +222,13 @@ namespace WebScrapperEngine.Scrapper
                     {
                         foreach (var node in nodes)
                         {
-                            Title = node.SelectSingleNode(Naruldonghua.titlePath)?.InnerText != null ? Regex.Replace(node.SelectSingleNode(Naruldonghua.titlePath).InnerText, @"[^0-9a-zA-Z]+", "") : null;
-                            Link = node.SelectSingleNode(Naruldonghua.linkPath)?.GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Naruldonghua.linkPath).GetAttributeValue<string>("href", null) : null;
-                            Image = node.SelectSingleNode(Naruldonghua.imagePath)?.Attributes[Naruldonghua.imageSrc].Value != null ? node.SelectSingleNode(Naruldonghua.imagePath).Attributes[Naruldonghua.imageSrc].Value : null;
+                            Title = node.SelectSingleNode(Naruldonghua.titlePath)?.InnerText != null ? 
+                                Regex.Replace(node.SelectSingleNode(Naruldonghua.titlePath).InnerText, @"[^0-9a-zA-Z]+", "") : null;
+                            Link = node.SelectSingleNode(Naruldonghua.linkPath)?.GetAttributeValue<string>("href", null) != null ? 
+                                node.SelectSingleNode(Naruldonghua.linkPath).GetAttributeValue<string>("href", null) : null;
+                            Image = node.SelectSingleNode(Naruldonghua.imagePath)?.GetAttributeValue<string>(Naruldonghua.imageSrc, null) ??
+                                (node.SelectSingleNode(Naruldonghua.imagePath)?.GetAttributeValue<string>(Naruldonghua.imageSrc, null) ?? null);
+
                             var donghuaCreation = new Creation()
                             {
                                 CreationType = (int)CreationType.Donghua,
@@ -292,9 +297,13 @@ namespace WebScrapperEngine.Scrapper
                         {
                             foreach (var node in nodes)
                             {
-                                Title = node.SelectSingleNode(Animexin.titlePath)?.InnerText != null ? Regex.Replace(node.SelectSingleNode(Animexin.titlePath).InnerText, @"[^0-9a-zA-Z]+", "") : null;
-                                Link = node.SelectSingleNode(Animexin.linkPath)?.GetAttributeValue<string>("href", null) != null ? node.SelectSingleNode(Animexin.linkPath).GetAttributeValue<string>("href", null) : null;
-                                Image = node.SelectSingleNode(Animexin.imagePath)?.Attributes[Animexin.imageSrc].Value != null ? node.SelectSingleNode(Animexin.imagePath).Attributes[Animexin.imageSrc].Value : null;
+                                Title = node.SelectSingleNode(Animexin.titlePath)?.InnerText != null ? 
+                                    Regex.Replace(node.SelectSingleNode(Animexin.titlePath).InnerText, @"[^0-9a-zA-Z]+", "") : null;
+                                Link = node.SelectSingleNode(Animexin.linkPath)?.GetAttributeValue<string>("href", null) != null ? 
+                                    node.SelectSingleNode(Animexin.linkPath).GetAttributeValue<string>("href", null) : null;
+                                Image = node.SelectSingleNode(Animexin.imagePath)?.GetAttributeValue<string>(Animexin.imageSrc, null) ??
+                                    (node.SelectSingleNode(Animexin.imagePath)?.GetAttributeValue<string>(Animexin.imageFallbackSrc, null) ?? null);
+
                                 var donghuaCreation = new Creation()
                                 {
                                     CreationType = (int)CreationType.Donghua,
